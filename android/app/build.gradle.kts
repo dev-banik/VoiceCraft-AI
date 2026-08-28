@@ -87,9 +87,17 @@ android {
                 "proguard-rules.pro",
             )
         }
-        debug {
-            applicationIdSuffix = ".debug"
-        }
+        // No applicationIdSuffix here: a ".debug"-suffixed id needs its own
+        // separate Firebase Android app registration (a second client entry
+        // in google-services.json) to satisfy the google-services Gradle
+        // plugin's processDebugGoogleServices task, which neither this
+        // repo's placeholder config nor a real `flutterfire configure` run
+        // sets up by default — confirmed from an actual CI failure
+        // ("No matching client found for package name
+        // 'com.voicecraft.ai.debug'"). Keeping debug on the same
+        // applicationId as release avoids that footgun for anyone building
+        // this project, at the cost of not being able to install both
+        // variants side by side on one device.
     }
 }
 
