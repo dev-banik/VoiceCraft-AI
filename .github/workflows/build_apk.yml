@@ -31,19 +31,26 @@ jobs:
         run: flutter doctor -v
 
       # This repo hand-authors the platform files that need real
-      # customization (AndroidManifest.xml, app/build.gradle.kts,
-      # MainActivity.kt, Info.plist, Podfile, ...) and deliberately omits
-      # the ones that are pure generated boilerplate a human never edits —
-      # the Gradle wrapper jar/scripts, the root settings.gradle.kts/
-      # build.gradle.kts (so their AGP/Kotlin/Gradle plugin versions always
-      # match whatever this Flutter SDK actually expects, not a guess baked
-      # in ahead of time), and the full ios/ Xcode project. `flutter create`
-      # only writes files that don't already exist, so re-running it here
-      # safely fills in exactly that missing boilerplate without touching
-      # anything we committed. --project-name is required: without it,
-      # flutter create derives the project name from the checkout
-      # directory ("VoiceCraft-AI" — invalid, not lowercase_with_underscores)
-      # instead of reading pubspec.yaml.
+      # customization (AndroidManifest.xml, settings.gradle.kts,
+      # build.gradle.kts, app/build.gradle.kts, MainActivity.kt, Info.plist,
+      # Podfile, ...) and deliberately omits the ones that are pure
+      # generated boilerplate a human never edits — the Gradle wrapper
+      # jar/scripts and the full ios/ Xcode project. `flutter create` only
+      # writes files that don't already exist, so re-running it here safely
+      # fills in exactly that missing boilerplate without touching anything
+      # we committed. --project-name is required: without it, flutter
+      # create derives the project name from the checkout directory
+      # ("VoiceCraft-AI" — invalid, not lowercase_with_underscores) instead
+      # of reading pubspec.yaml.
+      #
+      # settings.gradle.kts pins an explicit AGP/Kotlin version (see that
+      # file's own header comment) rather than being left for flutter
+      # create to generate: this SDK's default, AGP 9.0, hard-errors on the
+      # classic Kotlin DSL syntax used elsewhere in this repo's Gradle
+      # files, and AGP 9's replacement DSL isn't something to blind-migrate
+      # to without documentation. If a `flutter create` platform-boilerplate
+      # step ever fails here again, check whether this pin has drifted too
+      # far behind the Flutter SDK in use.
       - name: Generate missing platform boilerplate
         run: flutter create --platforms=android,ios --project-name voicecraft_ai --org com.voicecraft .
 
