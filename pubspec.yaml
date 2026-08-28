@@ -56,7 +56,18 @@ dependencies:
 
   # Connectivity / background sync
   connectivity_plus: ^6.1.0
-  workmanager: ^0.5.2
+  # Pinned >=0.8.0, not 0.5.2 originally used: pre-0.8 versions still ship
+  # Flutter's old v1 plugin-embedding shim code (io.flutter.plugins.shim /
+  # PluginRegistrantCallback / ShimPluginRegistry), which this Flutter SDK's
+  # engine no longer provides — confirmed verbatim from an actual CI build
+  # log ("Unresolved reference 'shim'" etc. in workmanager-0.5.2's
+  # BackgroundWorker.kt/WorkmanagerPlugin.kt). 0.8.0's changelog migrated
+  # to the federated plugin architecture, dropping that legacy code path.
+  # Checked the changelog for API breaks affecting this app's usage
+  # (Workmanager().initialize/registerPeriodicTask/cancelByUniqueName/
+  # executeTask, Constraints/NetworkType/ExistingWorkPolicy): none apply —
+  # this app already used the camelCase enum values 0.8.0 standardized on.
+  workmanager: ^0.10.9
 
   # Permissions
   permission_handler: ^11.3.1
