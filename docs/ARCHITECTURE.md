@@ -59,13 +59,22 @@ implementation (e.g. the `AiEngine` behind noise removal, see
 ## Local persistence
 
 Hive, not Isar — two boxes (`recordings_box`, `settings_box`), see
-`data/datasources/local/hive_boxes.dart`. `RecordingModel`'s
-`RecordingModelAdapter` (in `recording_model.g.dart`) is **hand-written**,
-matching exactly what `hive_generator`/`build_runner` would produce — this
-environment can't run `build_runner`, so the generated-code convention is
-followed by hand instead of skipped. Running
-`flutter pub run build_runner build --delete-conflicting-outputs` locally
-is safe and will regenerate an equivalent file.
+`data/datasources/local/hive_boxes.dart`. Both `.g.dart` adapter files
+(`recording_model.g.dart`, `app_settings_model.g.dart`) are **hand-written**,
+matching exactly what `hive_generator`/`build_runner` would produce. This
+is deliberate, not a placeholder: `hive_generator` and `riverpod_generator`
+(originally both dev dependencies here) turned out to have an unresolvable
+transitive `analyzer`/`macros` conflict on current Flutter/Dart SDKs, and
+since nothing in this codebase actually uses `@riverpod`/`@freezed`
+code-gen annotations — every provider and adapter is written by hand — the
+whole code-gen toolchain (`build_runner`, `hive_generator`, `freezed`,
+`json_serializable`, `riverpod_generator` and their `_annotation` packages)
+was dropped from `pubspec.yaml` rather than fought with. If you add a new
+Hive model field, update the model, its adapter, and its `typeId`/
+`HiveField` indices by hand together — or re-add `hive_generator` +
+`build_runner` as dev dependencies yourself and run
+`flutter pub run build_runner build --delete-conflicting-outputs` to
+generate an equivalent file.
 
 ## Non-destructive editing model
 

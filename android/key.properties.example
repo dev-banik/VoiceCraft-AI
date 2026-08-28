@@ -4,7 +4,7 @@
 #   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 \
 #     -validity 10000 -alias upload
 #
-# Without this file, android/app/build.gradle falls back to the Flutter
+# Without this file, android/app/build.gradle.kts falls back to the Flutter
 # debug key so `flutter build apk` still succeeds — that APK is fine for
 # manual installs (side-loading) but cannot be published to Google Play.
 storePassword=CHANGE_ME

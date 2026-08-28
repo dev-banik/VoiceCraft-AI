@@ -23,7 +23,7 @@
 - **Whisper transcription** — spec marks this optional; no transcription UI exists yet. Would slot in as a new `services/ai/transcription_service.dart` + a caption/transcript panel on the Playback screen.
 - **Signed iOS build / TestFlight pipeline** — needs your Apple Developer credentials; see [DEPLOYMENT.md](DEPLOYMENT.md#4-ios--running-on-a-device).
 - **Play Store-signed Android release in CI** — needs your upload keystore as a CI secret; see [DEPLOYMENT.md](DEPLOYMENT.md#2-android--release-signing-for-play-store).
-- **Encrypted local metadata at rest** — the spec's Security Requirements call for this; `encrypt`/`crypto` are already dependencies but Hive boxes aren't yet opened with `HiveAesCipher`. Straightforward follow-up: derive a key (e.g. via `flutter_secure_storage`), pass it to `Hive.openBox(..., encryptionCipher: ...)` in `hive_boxes.dart`.
+- **Encrypted local metadata at rest** — the spec's Security Requirements call for this; Hive boxes aren't yet opened with `HiveAesCipher`. Straightforward follow-up: add `flutter_secure_storage` (to hold the encryption key) and `hive` already supports `Hive.openBox(..., encryptionCipher: HiveAesCipher(key))` in `hive_boxes.dart`.
 - **Localization** — Settings has a language field in the data model; no `.arb` files / `flutter_localizations` wiring yet.
 - **Widget/integration test coverage** — `test/unit/` covers pure-Dart utilities only; controllers and screens have no automated tests yet (they need fakes for `record`/`just_audio`/Firebase, which is real setup work, not a quick add).
 - **App icon / splash branding** — ships with the default Flutter launcher icon; see the Play Store checklist in [DEPLOYMENT.md](DEPLOYMENT.md).
