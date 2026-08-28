@@ -32,7 +32,7 @@ class BackgroundSyncService {
       backgroundSyncTaskName,
       frequency: AppConstants.backgroundSyncInterval,
       constraints: Constraints(networkType: NetworkType.connected),
-      existingWorkPolicy: ExistingWorkPolicy.keep,
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
 
