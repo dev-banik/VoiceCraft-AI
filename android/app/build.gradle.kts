@@ -24,7 +24,11 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.voicecraft.ai"
-    compileSdk = 34
+    // 36, not 34: multiple plugins (google_sign_in_android, record_android,
+    // shared_preferences_android, ffmpeg_kit_flutter_new — seen as explicit
+    // "requires Android SDK version 35/36 or higher" warnings in an actual
+    // CI build log) now expect at least this.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -47,7 +51,7 @@ android {
         // project + in ios/Runner Info.plist together if you rebrand.
         applicationId = "com.voicecraft.ai"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 36
         versionCode = flutterVersionCode.toInt()
         versionName = flutterVersionName
         multiDexEnabled = true

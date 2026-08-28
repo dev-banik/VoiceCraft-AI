@@ -42,7 +42,17 @@ dependencies:
   audio_waveforms: ^1.2.0
 
   # Audio processing / editing (FFmpeg bundled binaries)
-  ffmpeg_kit_flutter_new: ^1.6.0
+  # Pinned >=4.0.0, not the 1.x line originally used: versions before 3.0.0
+  # depended on a separate ffmpeg_kit_flutter_android pub package that
+  # downloads its native .aar during the Android build, which race-fails
+  # against Java compilation on a clean/CI checkout ("cannot find symbol
+  # com.arthenica.ffmpegkit.*" — verified from an actual CI build log,
+  # not guessed). 3.0.0's changelog: "Got rid of obsolete
+  # ffmpeg_kit_flutter_android package" in favor of bundling it directly,
+  # which avoids that whole failure mode. Verified via pub.dev's changelog
+  # that FFmpegKit.execute/getReturnCode/ReturnCode.isSuccess/
+  # getAllLogsAsString — everything this app calls — are unchanged.
+  ffmpeg_kit_flutter_new: ^4.6.2
 
   # Connectivity / background sync
   connectivity_plus: ^6.1.0
