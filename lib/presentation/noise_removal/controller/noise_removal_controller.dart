@@ -59,8 +59,7 @@ class NoiseRemovalController extends StateNotifier<NoiseRemovalState> {
   }
 }
 
-final StateNotifierProvider.family<NoiseRemovalController, NoiseRemovalState,
-        String> noiseRemovalControllerProvider = StateNotifierProvider.family<
+final noiseRemovalControllerProvider = StateNotifierProvider.family<
     NoiseRemovalController, NoiseRemovalState, String>(
   (ref, recordingId) => NoiseRemovalController(ref, recordingId),
 );

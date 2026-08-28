@@ -29,7 +29,14 @@ dependencies:
   firebase_storage: ^12.3.6
 
   # Audio recording / playback
-  record: ^5.2.0
+  # Pinned to the 7.x line specifically: 5.x's floating sub-package
+  # constraints let pub resolve record_platform_interface far ahead of
+  # record_linux (interface added methods record_linux never implemented,
+  # e.g. startStream), which broke compilation even for an Android-only
+  # build since Flutter's kernel compile step type-checks the whole
+  # dependency graph. 7.x publishes all record_* sub-packages as a
+  # version-matched workspace, avoiding that whole class of bug.
+  record: ^7.1.1
   just_audio: ^0.9.42
   audio_session: ^0.1.21
   audio_waveforms: ^1.2.0
