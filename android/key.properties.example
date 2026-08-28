@@ -1,0 +1,13 @@
+# Copy to android/key.properties (already gitignored) and fill in with your
+# own upload keystore to produce a Play Store-signed release build.
+# Generate one with:
+#   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 \
+#     -validity 10000 -alias upload
+#
+# Without this file, android/app/build.gradle falls back to the Flutter
+# debug key so `flutter build apk` still succeeds — that APK is fine for
+# manual installs (side-loading) but cannot be published to Google Play.
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks

@@ -1,0 +1,109 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build-apk:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      # This repo hand-authors the platform files that need real
+      # customization (AndroidManifest.xml, build.gradle, MainActivity.kt,
+      # Info.plist, Podfile, ...) and deliberately omits the ones that are
+      # pure generated boilerplate a human never edits: the Gradle wrapper
+      # jar/scripts and the full ios/ Xcode project. `flutter create` only
+      # writes files that don't already exist, so re-running it here safely
+      # fills in exactly that missing boilerplate without touching anything
+      # we committed.
+      - name: Generate missing platform boilerplate
+        run: flutter create --platforms=android,ios --org com.voicecraft .
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Static analysis (non-blocking)
+        run: flutter analyze || true
+
+      - name: Run unit/widget tests
+        run: flutter test
+
+      - name: Build release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Build universal debug APK (always installable, unsigned)
+        run: flutter build apk --debug
+
+      - name: Upload release APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicecraft-ai-release-apks
+          path: build/app/outputs/flutter-apk/*release*.apk
+          if-no-files-found: error
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicecraft-ai-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: error
+
+  create-release-on-tag:
+    name: Attach APKs to GitHub Release
+    needs: build-apk
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate missing platform boilerplate
+        run: flutter create --platforms=android,ios --org com.voicecraft .
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/*release*.apk
+          generate_release_notes: true
