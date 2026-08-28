@@ -39,7 +39,7 @@ jobs:
       # fills in exactly that missing boilerplate without touching anything
       # we committed.
       - name: Generate missing platform boilerplate
-        run: flutter create --platforms=android,ios --org com.voicecraft .
+        run: flutter create --platforms=android,ios --project-name voicecraft_ai --org com.voicecraft .
 
       - name: Install dependencies
         run: flutter pub get
@@ -94,7 +94,7 @@ jobs:
           cache: true
 
       - name: Generate missing platform boilerplate
-        run: flutter create --platforms=android,ios --org com.voicecraft .
+        run: flutter create --platforms=android,ios --project-name voicecraft_ai --org com.voicecraft .
 
       - name: Install dependencies
         run: flutter pub get
