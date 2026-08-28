@@ -1,14 +1,17 @@
 // Pinned explicitly (rather than left for `flutter create` to generate,
-// as originally tried) because this Flutter SDK's default — AGP 9.0 —
-// hard-errors on the classic `android { }` / `kotlinOptions { }` /
-// `.srcDirs()` Kotlin DSL surface used in app/build.gradle.kts, requiring
-// a migration to AGP 9's new ApplicationExtension-based DSL that isn't
-// documented/stable enough yet to confidently target. AGP 8.5.2 predates
-// that breaking change (it only applies "by default in AGP 9.0" per AGP's
-// own deprecation message) and is a well-established, broadly compatible
-// version otherwise. A newer Gradle wrapper (which `flutter create` still
-// generates fresh) running an older, explicitly pinned AGP like this is
-// the well-supported direction for that combination.
+// as originally tried) to thread a narrow window this Flutter SDK requires:
+//   - AGP must be >= 8.11.1 — this exact version came from the Flutter
+//     Gradle plugin's own error message ("Your project's Android Gradle
+//     Plugin version is lower than Flutter's minimum supported version of
+//     Android Gradle Plugin version 8.11.1") when 8.5.2 was tried first.
+//   - AGP must be < 9.0 — AGP 9.0 defaults `android.newDsl=true`, which
+//     hard-errors on the classic `android { }` / `kotlinOptions { }` /
+//     `.srcDirs()` Kotlin DSL surface used in app/build.gradle.kts, per
+//     AGP's own deprecation message ("default in AGP 9.0"). Migrating to
+//     AGP 9's new ApplicationExtension-based DSL isn't something to
+//     confidently do without documentation for a release this new.
+// 8.11.1 is therefore pinned exactly: it's Flutter's stated floor, and
+// still within the pre-9.0 classic-DSL window.
 pluginManagement {
     val flutterSdkPath = run {
         val properties = java.util.Properties()
@@ -29,7 +32,7 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "8.5.2" apply false
+    id("com.android.application") version "8.11.1" apply false
     id("org.jetbrains.kotlin.android") version "1.9.24" apply false
 }
 
