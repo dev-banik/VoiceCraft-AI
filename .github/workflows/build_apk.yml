@@ -79,7 +79,14 @@ jobs:
       - name: Build universal debug APK (always installable, unsigned)
         run: flutter build apk --debug
 
+      # if: success() || failure() on both upload steps below (not
+      # always() — that would also fire on a cancelled run): a debug-build
+      # hiccup must never throw away an already-successful release build.
+      # Learned the hard way — an earlier debug-build failure here caused
+      # GitHub Actions to skip the release-APK upload entirely, even though
+      # the release build itself had already succeeded.
       - name: Upload release APKs
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: voicecraft-ai-release-apks
@@ -87,6 +94,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload debug APK
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: voicecraft-ai-debug-apk
