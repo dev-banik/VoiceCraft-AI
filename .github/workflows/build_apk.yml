@@ -31,15 +31,31 @@ jobs:
         run: flutter doctor -v
 
       # This repo hand-authors the platform files that need real
-      # customization (AndroidManifest.xml, build.gradle, MainActivity.kt,
-      # Info.plist, Podfile, ...) and deliberately omits the ones that are
-      # pure generated boilerplate a human never edits: the Gradle wrapper
-      # jar/scripts and the full ios/ Xcode project. `flutter create` only
-      # writes files that don't already exist, so re-running it here safely
-      # fills in exactly that missing boilerplate without touching anything
-      # we committed.
+      # customization (AndroidManifest.xml, app/build.gradle.kts,
+      # MainActivity.kt, Info.plist, Podfile, ...) and deliberately omits
+      # the ones that are pure generated boilerplate a human never edits —
+      # the Gradle wrapper jar/scripts, the root settings.gradle.kts/
+      # build.gradle.kts (so their AGP/Kotlin/Gradle plugin versions always
+      # match whatever this Flutter SDK actually expects, not a guess baked
+      # in ahead of time), and the full ios/ Xcode project. `flutter create`
+      # only writes files that don't already exist, so re-running it here
+      # safely fills in exactly that missing boilerplate without touching
+      # anything we committed. --project-name is required: without it,
+      # flutter create derives the project name from the checkout
+      # directory ("VoiceCraft-AI" — invalid, not lowercase_with_underscores)
+      # instead of reading pubspec.yaml.
       - name: Generate missing platform boilerplate
         run: flutter create --platforms=android,ios --project-name voicecraft_ai --org com.voicecraft .
+
+      # `flutter create` derives its default MainActivity.kt package from
+      # --org + the project name (com.voicecraft.voicecraft_ai), separate
+      # from the applicationId "com.voicecraft.ai" this app actually uses
+      # (set in android/app/build.gradle.kts, matching the committed
+      # MainActivity.kt under .../kotlin/com/voicecraft/ai/). That leaves
+      # an unused, unreferenced duplicate class at the org-derived path —
+      # harmless to the build, but pointless to ship, so drop it.
+      - name: Remove org-derived duplicate MainActivity
+        run: rm -rf android/app/src/main/kotlin/com/voicecraft/voicecraft_ai
 
       - name: Install dependencies
         run: flutter pub get
@@ -95,6 +111,16 @@ jobs:
 
       - name: Generate missing platform boilerplate
         run: flutter create --platforms=android,ios --project-name voicecraft_ai --org com.voicecraft .
+
+      # `flutter create` derives its default MainActivity.kt package from
+      # --org + the project name (com.voicecraft.voicecraft_ai), separate
+      # from the applicationId "com.voicecraft.ai" this app actually uses
+      # (set in android/app/build.gradle.kts, matching the committed
+      # MainActivity.kt under .../kotlin/com/voicecraft/ai/). That leaves
+      # an unused, unreferenced duplicate class at the org-derived path —
+      # harmless to the build, but pointless to ship, so drop it.
+      - name: Remove org-derived duplicate MainActivity
+        run: rm -rf android/app/src/main/kotlin/com/voicecraft/voicecraft_ai
 
       - name: Install dependencies
         run: flutter pub get

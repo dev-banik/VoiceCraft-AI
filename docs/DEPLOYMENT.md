@@ -55,7 +55,7 @@ extend `.github/workflows/build_apk.yml` to reconstruct
 - [ ] Bump `version` in `pubspec.yaml` (`versionName+versionCode`) per release.
 - [ ] Fill in a real Privacy Policy URL (the in-app dialog in Settings has placeholder text — required by Play Console before publishing, especially given microphone + account data usage).
 - [ ] Complete Play Console's Data Safety form (microphone audio, account email — see what's actually collected in [docs/FIRESTORE_SCHEMA.md](FIRESTORE_SCHEMA.md)).
-- [ ] Target API level / `compileSdk`/`targetSdk` in `android/app/build.gradle` must stay current with Play's requirements at submission time.
+- [ ] Target API level / `compileSdk`/`targetSdk` in `android/app/build.gradle.kts` must stay current with Play's requirements at submission time.
 
 ## 4. iOS — running on a device
 
