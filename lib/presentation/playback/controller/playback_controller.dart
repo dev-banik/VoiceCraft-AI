@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/recording_entity.dart';
@@ -37,7 +38,7 @@ class ThemeSource extends PlaybackSource {
 /// up front. Every screen that opens a recording (playback, noise removal,
 /// themes, enhancement, editor) reads the recording through this provider,
 /// so this one lazy-download path covers all of them.
-final FutureProvider.family<RecordingEntity?, String> recordingByIdProvider =
+final recordingByIdProvider =
     FutureProvider.family<RecordingEntity?, String>((ref, id) async {
   final result = await ref.read(recordingUsecasesProvider).getById(id);
   final recording = result.valueOrNull;
@@ -69,7 +70,7 @@ final StreamProvider<PlayerState> playbackStateProvider =
   return ref.watch(audioPlayerServiceProvider).stateStream;
 });
 
-final FutureProvider.family<List<double>, String> waveformSamplesProvider =
+final waveformSamplesProvider =
     FutureProvider.family<List<double>, String>((ref, path) {
   return ref.read(waveformServiceProvider).extract(path);
 });
