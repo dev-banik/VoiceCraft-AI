@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/di/providers.dart';
 import '../../../domain/entities/recording_entity.dart';
+import '../../shared/recording_mutations.dart';
 
 class VoiceThemeState {
   final VoiceTheme? selected;
@@ -54,14 +55,18 @@ class VoiceThemeController extends StateNotifier<VoiceThemeState> {
     }
   }
 
-  Future<void> save(RecordingEntity recording, VoiceTheme theme) async {
+  Future<bool> save(RecordingEntity recording, VoiceTheme theme) async {
     final path = state.previews[theme];
-    if (path == null) return;
-    final updatedVariants = Map<VoiceTheme, String>.from(
-      recording.themeVariants,
-    )..[theme] = path;
-    final updated = recording.copyWith(themeVariants: updatedVariants);
-    await ref.read(recordingUsecasesProvider).save(updated);
+    if (path == null) return false;
+    final saved = await saveRecordingPatch(
+      ref,
+      recording.id,
+      (current) => current.copyWith(
+        themeVariants: Map<VoiceTheme, String>.from(current.themeVariants)
+          ..[theme] = path,
+      ),
+    );
+    return saved != null;
   }
 }
 

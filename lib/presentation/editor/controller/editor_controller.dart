@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
 import '../../../core/utils/file_utils.dart';
 import '../../../domain/entities/recording_entity.dart';
+import '../../shared/recording_mutations.dart';
 
 /// Selection range as fractions (0..1) of total duration, used by the
 /// interactive waveform's drag handles.
@@ -147,12 +148,15 @@ class EditorController extends StateNotifier<EditorState> {
     final editor = ref.read(audioEditorServiceProvider);
     final newDuration = await editor.probeDuration(newPath);
     final newSize = await FileUtils.sizeOf(newPath);
-    final updated = recording.copyWith(
-      localPath: newPath,
-      duration: newDuration,
-      sizeBytes: newSize,
+    await saveRecordingPatch(
+      ref,
+      recording.id,
+      (current) => current.copyWith(
+        localPath: newPath,
+        duration: newDuration,
+        sizeBytes: newSize,
+      ),
     );
-    await ref.read(recordingUsecasesProvider).save(updated);
     setSelection(const EditorSelection());
   }
 

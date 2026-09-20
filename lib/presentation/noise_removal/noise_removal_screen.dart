@@ -123,8 +123,14 @@ class _NoiseRemovalScreenState extends ConsumerState<NoiseRemovalScreen> {
                       width: double.infinity,
                       child: OutlinedButton(
                         onPressed: () async {
-                          await controller.save(recording);
-                          if (context.mounted) Navigator.pop(context);
+                          final saved = await controller.save(recording);
+                          if (!context.mounted) return;
+                          // Hand the saved version back so playback opens on
+                          // it rather than dropping the user on the original.
+                          Navigator.pop(
+                            context,
+                            saved ? const DenoisedSource() : null,
+                          );
                         },
                         child: const Text('Save as noise-removed version'),
                       ),

@@ -100,8 +100,13 @@ class EnhancementScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () async {
-                      await controller.saveAsNewVersion(recording);
-                      if (context.mounted) Navigator.pop(context);
+                      final saved =
+                          await controller.saveAsNewVersion(recording);
+                      if (!context.mounted) return;
+                      Navigator.pop(
+                        context,
+                        saved ? const EnhancedSource() : null,
+                      );
                     },
                     child: const Text('Save as enhanced version'),
                   ),

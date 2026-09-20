@@ -105,8 +105,14 @@ class VoiceThemesScreen extends ConsumerWidget {
                               !state.previews.containsKey(state.selected)
                           ? null
                           : () async {
-                              await controller.save(recording, state.selected!);
-                              if (context.mounted) Navigator.pop(context);
+                              final theme = state.selected!;
+                              final saved =
+                                  await controller.save(recording, theme);
+                              if (!context.mounted) return;
+                              Navigator.pop(
+                                context,
+                                saved ? ThemeSource(theme) : null,
+                              );
                             },
                       child: const Text('Save as new version'),
                     ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/providers.dart';
 import '../../../domain/entities/enhancement_settings.dart';
 import '../../../domain/entities/recording_entity.dart';
+import '../../shared/recording_mutations.dart';
 
 class EnhancementState {
   final EnhancementSettings settings;
@@ -52,10 +53,14 @@ class EnhancementController extends StateNotifier<EnhancementState> {
     }
   }
 
-  Future<void> saveAsNewVersion(RecordingEntity recording) async {
-    if (state.resultPath == null) return;
-    final updated = recording.copyWith(enhancedPath: state.resultPath);
-    await ref.read(recordingUsecasesProvider).save(updated);
+  Future<bool> saveAsNewVersion(RecordingEntity recording) async {
+    if (state.resultPath == null) return false;
+    final saved = await saveRecordingPatch(
+      ref,
+      recording.id,
+      (current) => current.copyWith(enhancedPath: state.resultPath),
+    );
+    return saved != null;
   }
 }
 

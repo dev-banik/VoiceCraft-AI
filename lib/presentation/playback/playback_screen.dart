@@ -24,6 +24,16 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   PlaybackSource _source = const OriginalSource();
   String? _loadedPath;
 
+  /// Opens one of the processing tools and, when it saved a new version,
+  /// switches playback onto it. The tools pop the [PlaybackSource] they
+  /// produced; a null result means nothing was saved, so the current
+  /// selection stands.
+  Future<void> _openTool(String path) async {
+    final saved = await context.push<PlaybackSource>(path);
+    if (!mounted || saved == null) return;
+    setState(() => _source = saved);
+  }
+
   @override
   Widget build(BuildContext context) {
     final recordingAsync = ref.watch(recordingByIdProvider(widget.recordingId));
@@ -166,6 +176,11 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     ],
                   ),
                   const SizedBox(height: 28),
+                  Text(
+                    'Versions',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -207,7 +222,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.graphic_eq_rounded),
                           label: const Text('Denoise'),
-                          onPressed: () => context.push(
+                          onPressed: () => _openTool(
                             RoutePaths.noiseRemovalPath(recording.id),
                           ),
                         ),
@@ -217,7 +232,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.auto_awesome_rounded),
                           label: const Text('Themes'),
-                          onPressed: () => context.push(
+                          onPressed: () => _openTool(
                             RoutePaths.voiceThemesPath(recording.id),
                           ),
                         ),
@@ -227,7 +242,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         child: OutlinedButton.icon(
                           icon: const Icon(Icons.content_cut_rounded),
                           label: const Text('Edit'),
-                          onPressed: () => context.push(
+                          onPressed: () => _openTool(
                             RoutePaths.editorPath(recording.id),
                           ),
                         ),
