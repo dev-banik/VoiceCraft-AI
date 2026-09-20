@@ -1,3 +1,9 @@
+# Locally downloaded install builds (see dist/README.md) — not committed:
+# GitHub hard-rejects pushes over 100MB (the armeabi-v7a release APK is
+# ~103.6MB) and binaries like this don't belong in git history anyway.
+# Re-fetched from the latest successful CI run after every change instead.
+/dist/
+
 # Miscellaneous
 *.class
 *.log
