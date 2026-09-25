@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/router/route_names.dart';
 import '../playback/controller/playback_controller.dart';
+import '../shared/recording_mutations.dart';
+import '../shared/widgets/save_mode_dialog.dart';
 import 'controller/voice_theme_controller.dart';
 import 'widgets/theme_card.dart';
 
@@ -105,14 +109,34 @@ class VoiceThemesScreen extends ConsumerWidget {
                               !state.previews.containsKey(state.selected)
                           ? null
                           : () async {
-                              final theme = state.selected!;
-                              final saved =
-                                  await controller.save(recording, theme);
-                              if (!context.mounted) return;
-                              Navigator.pop(
+                              final voiceTheme = state.selected!;
+                              final mode = await showSaveModeDialog(
                                 context,
-                                saved ? ThemeSource(theme) : null,
+                                what: '${voiceTheme.label} version',
                               );
+                              if (mode == null || !context.mounted) return;
+
+                              final targetId = await controller.save(
+                                recording,
+                                voiceTheme,
+                                mode,
+                              );
+                              if (!context.mounted) return;
+                              if (targetId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Couldn't save that take."),
+                                  ),
+                                );
+                                return;
+                              }
+                              if (mode == DerivativeSaveMode.replace) {
+                                Navigator.pop(context, ThemeSource(voiceTheme));
+                              } else {
+                                context.pushReplacement(
+                                  RoutePaths.playbackPath(targetId),
+                                );
+                              }
                             },
                       child: const Text('Save as new version'),
                     ),

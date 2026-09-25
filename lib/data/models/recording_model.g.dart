@@ -36,13 +36,17 @@ class RecordingModelAdapter extends TypeAdapter<RecordingModel> {
       cloudUrl: fields[12] as String?,
       tags: (fields[13] as List).cast<String>(),
       enhancedPath: fields[14] as String?,
+      // Boxes written before these fields existed have no entry for them,
+      // so the lookup yields null and the constructor default applies.
+      kind: fields[15] as String? ?? 'original',
+      sourceRecordingId: fields[16] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, RecordingModel obj) {
     writer
-      ..writeByte(15)
+      ..writeByte(17)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -72,7 +76,11 @@ class RecordingModelAdapter extends TypeAdapter<RecordingModel> {
       ..writeByte(13)
       ..write(obj.tags)
       ..writeByte(14)
-      ..write(obj.enhancedPath);
+      ..write(obj.enhancedPath)
+      ..writeByte(15)
+      ..write(obj.kind)
+      ..writeByte(16)
+      ..write(obj.sourceRecordingId);
   }
 
   @override

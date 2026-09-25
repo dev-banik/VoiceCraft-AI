@@ -53,14 +53,22 @@ class EnhancementController extends StateNotifier<EnhancementState> {
     }
   }
 
-  Future<bool> saveAsNewVersion(RecordingEntity recording) async {
-    if (state.resultPath == null) return false;
-    final saved = await saveRecordingPatch(
+  /// Stores the enhanced take, either over [recording] or as its own entry.
+  /// Returns the id of the recording to show afterwards, or null if nothing
+  /// was saved.
+  Future<String?> save(
+    RecordingEntity recording,
+    DerivativeSaveMode mode,
+  ) async {
+    if (state.resultPath == null) return null;
+    return saveDerivative(
       ref,
-      recording.id,
-      (current) => current.copyWith(enhancedPath: state.resultPath),
+      recordingId: recording.id,
+      processedPath: state.resultPath!,
+      titleSuffix: 'enhanced',
+      mode: mode,
+      mark: (r, path) => r.copyWith(enhancedPath: path),
     );
-    return saved != null;
   }
 }
 

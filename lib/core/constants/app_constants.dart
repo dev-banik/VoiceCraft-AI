@@ -31,6 +31,28 @@ class AppConstants {
   static const Duration backgroundSyncInterval = Duration(minutes: 15);
 }
 
+/// Which shelf of the library a recording sits on.
+///
+/// [original] is a take exactly as recorded. [modified] is a processed copy
+/// that was saved alongside its source instead of over it. [archivedOriginal]
+/// is the audio a recording held before the user replaced it in place — kept
+/// so that replacing is never destructive and the untouched take stays
+/// reachable.
+enum RecordingKind { original, modified, archivedOriginal }
+
+extension RecordingKindLabel on RecordingKind {
+  String get label {
+    switch (this) {
+      case RecordingKind.original:
+        return 'Original';
+      case RecordingKind.modified:
+        return 'Modified';
+      case RecordingKind.archivedOriginal:
+        return 'Replaced original';
+    }
+  }
+}
+
 /// Supported recording output formats.
 enum RecordingFormat { wav, mp3, aac }
 

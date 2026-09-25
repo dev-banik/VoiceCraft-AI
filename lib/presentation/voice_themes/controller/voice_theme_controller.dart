@@ -55,18 +55,27 @@ class VoiceThemeController extends StateNotifier<VoiceThemeState> {
     }
   }
 
-  Future<bool> save(RecordingEntity recording, VoiceTheme theme) async {
+  /// Stores the themed take, either over [recording] or as its own entry.
+  /// Returns the id of the recording to show afterwards, or null if nothing
+  /// was saved.
+  Future<String?> save(
+    RecordingEntity recording,
+    VoiceTheme theme,
+    DerivativeSaveMode mode,
+  ) async {
     final path = state.previews[theme];
-    if (path == null) return false;
-    final saved = await saveRecordingPatch(
+    if (path == null) return null;
+    return saveDerivative(
       ref,
-      recording.id,
-      (current) => current.copyWith(
-        themeVariants: Map<VoiceTheme, String>.from(current.themeVariants)
-          ..[theme] = path,
+      recordingId: recording.id,
+      processedPath: path,
+      titleSuffix: theme.label,
+      mode: mode,
+      mark: (r, p) => r.copyWith(
+        themeVariants: Map<VoiceTheme, String>.from(r.themeVariants)
+          ..[theme] = p,
       ),
     );
-    return saved != null;
   }
 }
 

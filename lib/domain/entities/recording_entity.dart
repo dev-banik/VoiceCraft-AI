@@ -25,6 +25,15 @@ class RecordingEntity extends Equatable {
   /// Voice-theme derivatives generated from this recording, keyed by theme.
   final Map<VoiceTheme, String> themeVariants;
 
+  /// Which shelf this recording sits on — a plain take, a processed copy
+  /// saved alongside its source, or the audio preserved when a recording was
+  /// replaced in place.
+  final RecordingKind kind;
+
+  /// The recording this one was derived from, for [RecordingKind.modified]
+  /// and [RecordingKind.archivedOriginal]. Null for a plain take.
+  final String? sourceRecordingId;
+
   final bool synced;
   final String? cloudUrl;
   final List<String> tags;
@@ -42,6 +51,8 @@ class RecordingEntity extends Equatable {
     this.denoisedPath,
     this.enhancedPath,
     this.themeVariants = const {},
+    this.kind = RecordingKind.original,
+    this.sourceRecordingId,
     this.synced = false,
     this.cloudUrl,
     this.tags = const [],
@@ -51,6 +62,14 @@ class RecordingEntity extends Equatable {
   bool get hasEnhancement => enhancedPath != null;
   bool get hasThemeApplied => themeVariants.isNotEmpty;
   bool get isLocalOnly => !synced;
+
+  bool get isModified => kind == RecordingKind.modified;
+  bool get isArchivedOriginal => kind == RecordingKind.archivedOriginal;
+
+  /// True for anything that belongs in the day-to-day library. Archived
+  /// originals are backups of replaced audio, so they're kept out of the
+  /// main list and surfaced on their own tab instead.
+  bool get isInLibrary => kind != RecordingKind.archivedOriginal;
 
   RecordingEntity copyWith({
     String? id,
@@ -65,6 +84,8 @@ class RecordingEntity extends Equatable {
     String? denoisedPath,
     String? enhancedPath,
     Map<VoiceTheme, String>? themeVariants,
+    RecordingKind? kind,
+    String? sourceRecordingId,
     bool? synced,
     String? cloudUrl,
     List<String>? tags,
@@ -82,6 +103,8 @@ class RecordingEntity extends Equatable {
       denoisedPath: denoisedPath ?? this.denoisedPath,
       enhancedPath: enhancedPath ?? this.enhancedPath,
       themeVariants: themeVariants ?? this.themeVariants,
+      kind: kind ?? this.kind,
+      sourceRecordingId: sourceRecordingId ?? this.sourceRecordingId,
       synced: synced ?? this.synced,
       cloudUrl: cloudUrl ?? this.cloudUrl,
       tags: tags ?? this.tags,
@@ -102,6 +125,8 @@ class RecordingEntity extends Equatable {
         denoisedPath,
         enhancedPath,
         themeVariants,
+        kind,
+        sourceRecordingId,
         synced,
         cloudUrl,
         tags,

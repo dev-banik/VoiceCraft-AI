@@ -53,17 +53,22 @@ class NoiseRemovalController extends StateNotifier<NoiseRemovalState> {
     }
   }
 
-  /// Attaches the processed file to the recording as its noise-removed
-  /// version. Returns true once it is stored, so the caller can send the
-  /// playback screen straight to that version instead of the original.
-  Future<bool> save(RecordingEntity recording) async {
-    if (state.resultPath == null) return false;
-    final saved = await saveRecordingPatch(
+  /// Stores the processed file, either over [recording] or as its own entry,
+  /// per [mode]. Returns the id of the recording to show afterwards, or null
+  /// if nothing was saved.
+  Future<String?> save(
+    RecordingEntity recording,
+    DerivativeSaveMode mode,
+  ) async {
+    if (state.resultPath == null) return null;
+    return saveDerivative(
       ref,
-      recording.id,
-      (current) => current.copyWith(denoisedPath: state.resultPath),
+      recordingId: recording.id,
+      processedPath: state.resultPath!,
+      titleSuffix: 'noise removed',
+      mode: mode,
+      mark: (r, path) => r.copyWith(denoisedPath: path),
     );
-    return saved != null;
   }
 }
 

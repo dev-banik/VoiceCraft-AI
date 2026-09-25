@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/router/route_names.dart';
 import '../playback/controller/playback_controller.dart';
+import '../shared/recording_mutations.dart';
+import '../shared/widgets/save_mode_dialog.dart';
 import 'controller/enhancement_controller.dart';
 
 class EnhancementScreen extends ConsumerWidget {
@@ -100,13 +104,29 @@ class EnhancementScreen extends ConsumerWidget {
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () async {
-                      final saved =
-                          await controller.saveAsNewVersion(recording);
-                      if (!context.mounted) return;
-                      Navigator.pop(
+                      final mode = await showSaveModeDialog(
                         context,
-                        saved ? const EnhancedSource() : null,
+                        what: 'enhanced audio',
                       );
+                      if (mode == null || !context.mounted) return;
+
+                      final targetId = await controller.save(recording, mode);
+                      if (!context.mounted) return;
+                      if (targetId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Couldn't save that take."),
+                          ),
+                        );
+                        return;
+                      }
+                      if (mode == DerivativeSaveMode.replace) {
+                        Navigator.pop(context, const EnhancedSource());
+                      } else {
+                        context.pushReplacement(
+                          RoutePaths.playbackPath(targetId),
+                        );
+                      }
                     },
                     child: const Text('Save as enhanced version'),
                   ),

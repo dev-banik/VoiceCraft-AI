@@ -54,6 +54,14 @@ class RecordingModel extends HiveObject {
   @HiveField(14)
   final String? enhancedPath;
 
+  /// [RecordingKind] stored as its `name`. Records written before this field
+  /// existed read back as null and are treated as plain originals.
+  @HiveField(15)
+  final String kind;
+
+  @HiveField(16)
+  final String? sourceRecordingId;
+
   RecordingModel({
     required this.id,
     required this.title,
@@ -67,6 +75,8 @@ class RecordingModel extends HiveObject {
     this.denoisedPath,
     this.enhancedPath,
     this.themeVariants = const {},
+    this.kind = 'original',
+    this.sourceRecordingId,
     this.synced = false,
     this.cloudUrl,
     this.tags = const [],
@@ -87,6 +97,8 @@ class RecordingModel extends HiveObject {
       enhancedPath: e.enhancedPath,
       themeVariants:
           e.themeVariants.map((theme, path) => MapEntry(theme.name, path)),
+      kind: e.kind.name,
+      sourceRecordingId: e.sourceRecordingId,
       synced: e.synced,
       cloudUrl: e.cloudUrl,
       tags: e.tags,
@@ -109,6 +121,10 @@ class RecordingModel extends HiveObject {
       themeVariants: themeVariants.map(
         (name, path) => MapEntry(VoiceTheme.values.byName(name), path),
       ),
+      // Unknown or absent values fall back to a plain take rather than
+      // throwing, so a box written by an older build still opens.
+      kind: RecordingKind.values.asNameMap()[kind] ?? RecordingKind.original,
+      sourceRecordingId: sourceRecordingId,
       synced: synced,
       cloudUrl: cloudUrl,
       tags: tags,
