@@ -1,13 +1,15 @@
 import 'dart:io';
 
-import 'package:path_provider/path_provider.dart';
+import '../../core/utils/file_utils.dart';
 
 /// Computes local storage usage for the Dashboard's "Storage Usage" stat
 /// and the Settings > Storage Management screen.
 class StorageUsageService {
   Future<int> recordingsDirectoryBytes() async {
-    final base = await getApplicationDocumentsDirectory();
-    final dir = Directory('${base.path}/recordings');
+    // Asks FileUtils where recordings actually live rather than assuming
+    // app-private storage. Once the library moved to the public folder this
+    // was measuring an empty directory and reporting 0 B.
+    final dir = await FileUtils.recordingsDirectory();
     if (!await dir.exists()) return 0;
 
     int total = 0;
