@@ -107,8 +107,12 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                   .clamp(0.0, 1.0);
 
           return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
+            // Scrollable, not a bare Column. Adding the video preview pushed
+            // the transport and the Denoise/Themes/Edit row off the bottom
+            // with no way to reach them — and on a short screen the audio
+            // layout was already close to the edge.
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -159,15 +163,16 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  if (recording.isVideo) ...[
+                  if (recording.isVideo)
                     VideoPreview(
                       path: activePath,
                       position: position,
                       isPlaying: isPlaying,
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  waveformAsync.when(
+                    )
+                  // The picture already shows what is playing, and pulling a
+                  // waveform out of a video container mostly fails anyway.
+                  else
+                    waveformAsync.when(
                     loading: () => const SizedBox(
                       height: 100,
                       child: Center(child: CircularProgressIndicator()),

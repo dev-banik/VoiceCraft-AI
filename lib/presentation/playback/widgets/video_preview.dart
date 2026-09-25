@@ -107,11 +107,18 @@ class _VideoPreviewState extends State<VideoPreview> {
       );
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: AspectRatio(
-        aspectRatio: controller.value.aspectRatio,
-        child: VideoPlayer(controller),
+    // Capped height: a portrait clip at its natural aspect ratio fills the
+    // whole screen and buries the controls below it.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 260),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: VideoPlayer(controller),
+          ),
+        ),
       ),
     );
   }

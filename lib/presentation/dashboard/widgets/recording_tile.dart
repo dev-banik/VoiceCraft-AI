@@ -38,7 +38,12 @@ class RecordingTile extends StatelessWidget {
                   color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(Icons.graphic_eq_rounded, color: scheme.primary),
+                child: Icon(
+                  recording.isVideo
+                      ? Icons.movie_rounded
+                      : Icons.graphic_eq_rounded,
+                  color: scheme.primary,
+                ),
               ),
               const SizedBox(width: 14),
               Expanded(
