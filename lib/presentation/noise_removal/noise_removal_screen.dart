@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/di/providers.dart';
 import '../../core/router/route_names.dart';
 import '../../domain/entities/recording_entity.dart';
 import '../playback/controller/playback_controller.dart';
@@ -20,6 +21,14 @@ class NoiseRemovalScreen extends ConsumerStatefulWidget {
 
 class _NoiseRemovalScreenState extends ConsumerState<NoiseRemovalScreen> {
   bool _playingProcessed = true;
+
+  @override
+  void dispose() {
+    // Same shared player as everywhere else: without this, an A/B preview
+    // carries on playing after the screen is gone.
+    ref.read(audioPlayerServiceProvider).stop();
+    super.dispose();
+  }
 
   /// Loads whichever side of the comparison is selected and starts it, so
   /// switching between Original and Processed plays straight away instead of

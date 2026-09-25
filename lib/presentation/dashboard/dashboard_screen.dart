@@ -11,6 +11,8 @@ import '../../domain/entities/recording_entity.dart';
 import '../auth/sign_in_sheet.dart';
 import '../shared/widgets/empty_state.dart';
 import 'controller/dashboard_controller.dart';
+import 'controller/import_controller.dart';
+import 'widgets/new_recording_fab.dart';
 import 'widgets/recording_tile.dart';
 import 'widgets/storage_safety_card.dart';
 import 'widgets/storage_summary_card.dart';
@@ -168,11 +170,35 @@ class DashboardScreen extends ConsumerWidget {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(RoutePaths.record),
-        child: const Icon(Icons.add_rounded, size: 30),
+      floatingActionButton: NewRecordingFab(
+        onRecord: () => context.push(RoutePaths.record),
+        onUpload: () => _importAudio(context, ref),
       ),
     );
+  }
+
+  /// Imports an audio file from the device, then opens it — the point of
+  /// importing is to do something to it, so landing back on an unchanged
+  /// list would just mean hunting for what was added.
+  Future<void> _importAudio(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Adding to your library…'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
+    final result = await ref.read(importControllerProvider).pickAndImport();
+    if (!context.mounted) return;
+    messenger.hideCurrentSnackBar();
+
+    if (result.wasCancelled) return;
+    if (!result.isSuccess) {
+      messenger.showSnackBar(SnackBar(content: Text(result.message)));
+      return;
+    }
+    context.push(RoutePaths.playbackPath(result.recordingId!));
   }
 
   Future<void> _share(BuildContext context, RecordingEntity recording) async {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../../core/di/providers.dart';
 import '../../core/router/route_names.dart';
 import '../../core/utils/formatters.dart';
 import '../shared/widgets/static_waveform.dart';
@@ -28,6 +29,15 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   /// until the source has actually loaded.
   Duration? _playerDuration;
   String? _loadError;
+
+  @override
+  void dispose() {
+    // The player is a long-lived singleton shared with the denoise and theme
+    // screens, so leaving this screen never stopped it — the recording kept
+    // playing over the dashboard with no way to stop it short of coming back.
+    ref.read(audioPlayerServiceProvider).stop();
+    super.dispose();
+  }
 
   Future<void> _load(String path) async {
     try {

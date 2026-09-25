@@ -98,10 +98,8 @@ class RecordingTile extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.more_vert_rounded),
-                onPressed: onMore,
-              ),
+              // No ⋮ button: long-pressing the tile opens the same sheet,
+              // and the row reads better with the title given the full width.
             ],
           ),
         ),
