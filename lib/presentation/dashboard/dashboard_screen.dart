@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../core/di/providers.dart';
 import '../../core/router/route_names.dart';
@@ -73,6 +76,7 @@ class DashboardScreen extends ConsumerWidget {
                           .inHours < 24)
                       .length,
                   totalStorageBytes: totalBytes,
+                  onStorageTap: () => context.push(RoutePaths.settings),
                 ),
                 const SizedBox(height: 20),
                 SizedBox(
@@ -171,6 +175,53 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+  Future<void> _share(BuildContext context, RecordingEntity recording) async {
+    final file = File(recording.localPath);
+    if (!await file.exists()) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("That recording's audio file is gone.")),
+      );
+      return;
+    }
+    await Share.shareXFiles(
+      [XFile(recording.localPath)],
+      subject: recording.title,
+    );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    RecordingEntity recording,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete recording?'),
+        content: Text(
+          '"${recording.title}" will be removed from your library. This '
+          "can't be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(recordingUsecasesProvider).delete(recording.id);
+  }
+
   String _listHeading(LibraryFilters filters) {
     switch (filters.tab) {
       case LibraryTab.all:
@@ -214,6 +265,27 @@ class DashboardScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                child: Text(
+                  recording.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.ios_share_rounded),
+                title: const Text('Share'),
+                subtitle: const Text('Send the audio to another app'),
+                onTap: () async {
+                  Navigator.pop(sheetContext);
+                  await _share(context, recording);
+                },
+              ),
               ListTile(
                 leading: const Icon(Icons.graphic_eq_rounded),
                 title: const Text('Remove noise'),
@@ -265,9 +337,9 @@ class DashboardScreen extends ConsumerWidget {
                 ),
                 onTap: () async {
                   Navigator.pop(sheetContext);
-                  await ref
-                      .read(recordingUsecasesProvider)
-                      .delete(recording.id);
+                  // Deleting used to happen on the first tap with no
+                  // confirmation, one slip away from losing a take.
+                  await _confirmDelete(context, ref, recording);
                 },
               ),
               const SizedBox(height: 8),

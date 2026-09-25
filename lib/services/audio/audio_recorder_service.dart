@@ -63,6 +63,12 @@ class AudioRecorderService {
     _stopwatch
       ..reset()
       ..start();
+    _startTicking();
+
+    return path;
+  }
+
+  void _startTicking() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
       final amp = await _recorder.getAmplitude();
@@ -70,18 +76,23 @@ class AudioRecorderService {
         RecorderTick(elapsed: _stopwatch.elapsed, amplitudeDb: amp.current),
       );
     });
-
-    return path;
   }
 
   Future<void> pause() async {
     await _recorder.pause();
     _stopwatch.stop();
+    // The tick timer has to stop too. While it ran, every tick pushed a new
+    // RecorderTick, and the listener treats any tick as evidence that a take
+    // is in progress — so pausing was immediately undone and the button
+    // looked dead.
+    _timer?.cancel();
+    _timer = null;
   }
 
   Future<void> resume() async {
     await _recorder.resume();
     _stopwatch.start();
+    _startTicking();
   }
 
   Future<String?> stop() async {

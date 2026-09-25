@@ -79,8 +79,12 @@ class PlaybackController {
   final Ref ref;
   const PlaybackController(this.ref);
 
-  Future<void> load(String path) async {
-    await ref.read(audioPlayerServiceProvider).loadFile(path);
+  /// Loads [path] and returns the duration the player reports, which is the
+  /// authoritative one — the value stored on the recording can be wrong for
+  /// a derivative, and a screen that trusts it ends up with a seek bar that
+  /// does not match the audio.
+  Future<Duration?> load(String path) {
+    return ref.read(audioPlayerServiceProvider).loadFile(path);
   }
 
   Future<void> playPause(bool isPlaying) async {

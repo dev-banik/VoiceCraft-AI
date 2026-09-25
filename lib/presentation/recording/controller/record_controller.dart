@@ -68,11 +68,13 @@ class RecordController extends StateNotifier<RecordState> {
       while (wave.length > _maxWaveformSamples) {
         wave.removeAt(0);
       }
+      // Deliberately does not set `status`: a late tick arriving just after
+      // the user hit pause would otherwise flip the state straight back to
+      // recording, which is exactly what made the pause button look broken.
       state = state.copyWith(
         elapsed: tick.elapsed,
         amplitudeDb: tick.amplitudeDb,
         waveform: wave,
-        status: RecordStatus.recording,
       );
     });
   }

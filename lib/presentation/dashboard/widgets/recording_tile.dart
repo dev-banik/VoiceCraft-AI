@@ -24,6 +24,9 @@ class RecordingTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: onTap,
+        // Long-press opens the same actions sheet as the ⋮ button — the
+        // gesture people reach for first on a list like this.
+        onLongPress: onMore,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Row(

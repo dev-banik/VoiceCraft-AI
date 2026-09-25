@@ -24,6 +24,27 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   PlaybackSource _source = const OriginalSource();
   String? _loadedPath;
 
+  /// Duration as the player reports it, which governs the seek bar. Null
+  /// until the source has actually loaded.
+  Duration? _playerDuration;
+  String? _loadError;
+
+  Future<void> _load(String path) async {
+    try {
+      final duration = await ref.read(playbackControllerProvider).load(path);
+      if (!mounted) return;
+      setState(() {
+        _playerDuration = duration;
+        _loadError = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      // Surfacing this beats the old behaviour, where a failed load left a
+      // transport that silently ignored play and seek.
+      setState(() => _loadError = e.toString());
+    }
+  }
+
   /// Opens one of the processing tools and, when it saved a new version,
   /// switches playback onto it. The tools pop the [PlaybackSource] they
   /// produced; a null result means nothing was saved, so the current
@@ -58,9 +79,9 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
 
           if (_loadedPath != activePath) {
             _loadedPath = activePath;
-            Future.microtask(
-              () => ref.read(playbackControllerProvider).load(activePath),
-            );
+            _playerDuration = null;
+            _loadError = null;
+            Future.microtask(() => _load(activePath));
           }
 
           final waveformAsync = ref.watch(waveformSamplesProvider(activePath));
@@ -68,7 +89,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
           final stateAsync = ref.watch(playbackStateProvider);
           final position = positionAsync.valueOrNull ?? Duration.zero;
           final isPlaying = stateAsync.valueOrNull?.playing ?? false;
-          final duration = recording.duration;
+          final duration = _playerDuration ?? recording.duration;
           final progress = duration.inMilliseconds == 0
               ? 0.0
               : (position.inMilliseconds / duration.inMilliseconds)
@@ -91,6 +112,41 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     Formatters.dateTime(recording.createdAt),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  if (_loadError != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.errorContainer,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            color:
+                                Theme.of(context).colorScheme.onErrorContainer,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _loadError!,
+                              style: TextStyle(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onErrorContainer,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _load(activePath),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   waveformAsync.when(
                     loading: () => const SizedBox(

@@ -8,11 +8,15 @@ class StorageSummaryCard extends StatelessWidget {
   final int recentCount;
   final int totalStorageBytes;
 
+  /// Tapping the Storage tile jumps to where storage is actually managed.
+  final VoidCallback? onStorageTap;
+
   const StorageSummaryCard({
     super.key,
     required this.totalRecordings,
     required this.recentCount,
     required this.totalStorageBytes,
+    this.onStorageTap,
   });
 
   @override
@@ -43,6 +47,7 @@ class StorageSummaryCard extends StatelessWidget {
             label: 'Storage',
             value: Formatters.fileSize(totalStorageBytes),
             color: AppColors.accent,
+            onTap: onStorageTap,
           ),
         ),
       ],
@@ -55,18 +60,23 @@ class _StatTile extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
+  final VoidCallback? onTap;
 
   const _StatTile({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
         child: Column(
           children: [
@@ -87,6 +97,7 @@ class _StatTile extends StatelessWidget {
                   ),
             ),
           ],
+        ),
         ),
       ),
     );
