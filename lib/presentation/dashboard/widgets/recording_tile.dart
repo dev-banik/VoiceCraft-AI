@@ -73,11 +73,18 @@ class RecordingTile extends StatelessWidget {
                       ],
                     ),
                     if (recording.hasNoiseRemoval ||
-                        recording.hasThemeApplied) ...[
+                        recording.hasThemeApplied ||
+                        !recording.isInLibrary ||
+                        recording.isModified) ...[
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 6,
+                        runSpacing: 6,
                         children: [
+                          if (recording.isModified)
+                            const _MiniChip(label: 'Modified'),
+                          if (recording.isArchivedOriginal)
+                            const _MiniChip(label: 'Replaced original'),
                           if (recording.hasNoiseRemoval)
                             const _MiniChip(label: 'Denoised'),
                           if (recording.hasThemeApplied)

@@ -20,6 +20,9 @@ class DashboardScreen extends ConsumerWidget {
     final totalCount = ref.watch(totalRecordingsCountProvider);
     final totalBytes = ref.watch(totalStorageBytesProvider).valueOrNull ?? 0;
     final isSignedIn = ref.watch(isSignedInProvider);
+    final filters = ref.watch(libraryFiltersProvider);
+    final visible = ref.watch(visibleRecordingsProvider);
+    final tabCounts = ref.watch(libraryTabCountsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -70,25 +73,90 @@ class DashboardScreen extends ConsumerWidget {
                   totalStorageBytes: totalBytes,
                 ),
                 const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: SegmentedButton<LibraryTab>(
+                    showSelectedIcon: false,
+                    segments: [
+                      for (final tab in LibraryTab.values)
+                        ButtonSegment(
+                          value: tab,
+                          label: Text('${tab.label} (${tabCounts[tab] ?? 0})'),
+                        ),
+                    ],
+                    selected: {filters.tab},
+                    onSelectionChanged: (selection) => ref
+                        .read(libraryFiltersProvider.notifier)
+                        .update((f) => f.copyWith(tab: selection.first)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilterChip(
+                      label: const Text('Denoised'),
+                      selected: filters.denoisedOnly,
+                      onSelected: (v) => ref
+                          .read(libraryFiltersProvider.notifier)
+                          .update((f) => f.copyWith(denoisedOnly: v)),
+                    ),
+                    FilterChip(
+                      label: const Text('Theme applied'),
+                      selected: filters.themeAppliedOnly,
+                      onSelected: (v) => ref
+                          .read(libraryFiltersProvider.notifier)
+                          .update((f) => f.copyWith(themeAppliedOnly: v)),
+                    ),
+                    if (filters.hasChipFilter)
+                      ActionChip(
+                        avatar: const Icon(Icons.clear_rounded, size: 18),
+                        label: const Text('Clear'),
+                        onPressed: () => ref
+                            .read(libraryFiltersProvider.notifier)
+                            .update(
+                              (f) => f.copyWith(
+                                denoisedOnly: false,
+                                themeAppliedOnly: false,
+                              ),
+                            ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  'Your recordings',
+                  _listHeading(filters),
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium
                       ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
-                ...recordings.map(
-                  (r) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: RecordingTile(
-                      recording: r,
-                      onTap: () =>
-                          context.push(RoutePaths.playbackPath(r.id)),
-                      onMore: () => _showActions(context, ref, r),
+                if (visible.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Text(
+                      _emptyMessage(filters),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                    ),
+                  )
+                else
+                  ...visible.map(
+                    (r) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: RecordingTile(
+                        recording: r,
+                        onTap: () =>
+                            context.push(RoutePaths.playbackPath(r.id)),
+                        onMore: () => _showActions(context, ref, r),
+                      ),
                     ),
                   ),
-                ),
               ],
             );
           },
@@ -99,6 +167,33 @@ class DashboardScreen extends ConsumerWidget {
         child: const Icon(Icons.add_rounded, size: 30),
       ),
     );
+  }
+
+  String _listHeading(LibraryFilters filters) {
+    switch (filters.tab) {
+      case LibraryTab.all:
+        return 'Your recordings';
+      case LibraryTab.modified:
+        return 'Modified recordings';
+      case LibraryTab.originals:
+        return 'Originals you replaced';
+    }
+  }
+
+  String _emptyMessage(LibraryFilters filters) {
+    if (filters.hasChipFilter) {
+      return 'No recordings here match those filters.';
+    }
+    switch (filters.tab) {
+      case LibraryTab.all:
+        return 'No recordings yet.';
+      case LibraryTab.modified:
+        return 'Nothing here yet. When you process a recording and choose '
+            '"Save as a new recording", it lands on this tab.';
+      case LibraryTab.originals:
+        return 'Nothing here yet. When you replace a recording with a '
+            'processed version, the untouched take is kept here.';
+    }
   }
 
   void _showActions(
