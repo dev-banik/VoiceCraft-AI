@@ -9,10 +9,10 @@ import 'storage_location.dart';
 /// Layout on disk, under whichever root [StorageLocation.recordingsRoot]
 /// resolves to — the public "VoiceCraft AI" folder when the user has granted
 /// access to it, app-private storage otherwise:
-///   <root>/recordings/<id>.<ext>            original take
-///   <root>/recordings/<id>_denoised.<ext>    noise-removal output
-///   <root>/recordings/<id>_<theme>.<ext>     voice-theme output
-///   <root>/recordings/<id>_edit_<n>.<ext>     editor exports
+///   `<root>/recordings/<id>.<ext>`             original take
+///   `<root>/recordings/<id>_denoised.<ext>`    noise-removal output
+///   `<root>/recordings/<id>_<theme>.<ext>`     voice-theme output
+///   `<root>/recordings/<id>_edit_<n>.<ext>`    editor exports
 const Uuid _uuid = Uuid();
 
 class FileUtils {

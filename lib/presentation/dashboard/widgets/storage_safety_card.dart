@@ -117,7 +117,7 @@ class _StorageSafetyCardState extends ConsumerState<StorageSafetyCard> {
                       height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.drive_file_move_outline_rounded),
+                  : const Icon(Icons.drive_file_move_rounded),
               label: Text(_working ? 'Moving…' : 'Move them out'),
               onPressed: _working ? null : _enable,
             ),
