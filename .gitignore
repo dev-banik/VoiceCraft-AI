@@ -97,3 +97,12 @@ coverage/
 # /dist/ above: these are CI build outputs, well over GitHub's 100MB push
 # limit, and re-fetchable any time.
 /install apk/
+
+# Release signing material. The keystore and its passwords must never be
+# committed — a public repo would hand anyone the ability to sign builds
+# that upgrade over yours. CI reads these from GitHub Actions secrets;
+# see docs/SIGNING.md.
+*.jks
+*.keystore
+key.properties
+/secrets/
