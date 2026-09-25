@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/di/providers.dart';
 import '../../core/router/route_names.dart';
 import '../../core/utils/formatters.dart';
+import '../../services/ai/processed_media.dart';
 import '../shared/widgets/static_waveform.dart';
 import 'widgets/video_preview.dart';
 import 'controller/playback_controller.dart';
@@ -31,17 +35,50 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
   Duration? _playerDuration;
   String? _loadError;
 
+  /// For a video, this controller *is* the player — it produces the sound as
+  /// well as the picture, and the transport below drives it instead of the
+  /// audio engine. Null whenever the active source is plain audio.
+  VideoPlayerController? _video;
+
+  bool get _isVideoActive => _video != null;
+
   @override
   void dispose() {
-    // The player is a long-lived singleton shared with the denoise and theme
-    // screens, so leaving this screen never stopped it — the recording kept
-    // playing over the dashboard with no way to stop it short of coming back.
+    // The audio player is a long-lived singleton shared with the denoise and
+    // theme screens, so leaving this screen never stopped it — the recording
+    // kept playing over the dashboard with no way to stop it.
     ref.read(audioPlayerServiceProvider).stop();
+    _video?.removeListener(_onVideoTick);
+    _video?.dispose();
     super.dispose();
   }
 
-  Future<void> _load(String path) async {
+  void _onVideoTick() {
+    // The video controller has no position stream, so the screen repaints
+    // from its listener to keep the seek bar and play icon honest.
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _load(String path, {required bool isVideo}) async {
+    await _disposeVideo();
     try {
+      if (isVideo) {
+        final controller = VideoPlayerController.file(File(path));
+        await controller.initialize();
+        if (!mounted) {
+          await controller.dispose();
+          return;
+        }
+        await controller.setVolume(1);
+        controller.addListener(_onVideoTick);
+        setState(() {
+          _video = controller;
+          _playerDuration = controller.value.duration;
+          _loadError = null;
+        });
+        return;
+      }
+
       final duration = await ref.read(playbackControllerProvider).load(path);
       if (!mounted) return;
       setState(() {
@@ -54,6 +91,43 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
       // transport that silently ignored play and seek.
       setState(() => _loadError = e.toString());
     }
+  }
+
+  Future<void> _disposeVideo() async {
+    final controller = _video;
+    if (controller == null) return;
+    controller.removeListener(_onVideoTick);
+    _video = null;
+    await controller.dispose();
+  }
+
+  // --- Transport, routed to whichever engine owns the active source -------
+
+  Future<void> _togglePlay(bool isPlaying) async {
+    final video = _video;
+    if (video != null) {
+      isPlaying ? await video.pause() : await video.play();
+      return;
+    }
+    await ref.read(playbackControllerProvider).playPause(isPlaying);
+  }
+
+  Future<void> _seek(Duration position) async {
+    final video = _video;
+    if (video != null) return video.seekTo(position);
+    return ref.read(playbackControllerProvider).seek(position);
+  }
+
+  Future<void> _setSpeed(double speed) async {
+    final video = _video;
+    if (video != null) return video.setPlaybackSpeed(speed);
+    return ref.read(playbackControllerProvider).setSpeed(speed);
+  }
+
+  Future<void> _setLoop(bool loop) async {
+    final video = _video;
+    if (video != null) return video.setLooping(loop);
+    return ref.read(playbackControllerProvider).setLoop(loop);
   }
 
   /// Opens one of the processing tools and, when it saved a new version,
@@ -88,18 +162,29 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
               recording.themeVariants[t] ?? recording.localPath,
           };
 
+          // Decided per file, not per recording: a video's extracted
+          // soundtrack is a plain audio derivative of a video entry.
+          final activeIsVideo = isVideoPath(activePath);
+
           if (_loadedPath != activePath) {
             _loadedPath = activePath;
             _playerDuration = null;
             _loadError = null;
-            Future.microtask(() => _load(activePath));
+            Future.microtask(
+              () => _load(activePath, isVideo: activeIsVideo),
+            );
           }
 
-          final waveformAsync = ref.watch(waveformSamplesProvider(activePath));
           final positionAsync = ref.watch(playbackPositionProvider);
           final stateAsync = ref.watch(playbackStateProvider);
-          final position = positionAsync.valueOrNull ?? Duration.zero;
-          final isPlaying = stateAsync.valueOrNull?.playing ?? false;
+
+          final video = _video;
+          final position = video != null
+              ? video.value.position
+              : (positionAsync.valueOrNull ?? Duration.zero);
+          final isPlaying = video != null
+              ? video.value.isPlaying
+              : (stateAsync.valueOrNull?.playing ?? false);
           final duration = _playerDuration ?? recording.duration;
           final progress = duration.inMilliseconds == 0
               ? 0.0
@@ -155,7 +240,8 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                             ),
                           ),
                           TextButton(
-                            onPressed: () => _load(activePath),
+                            onPressed: () =>
+                                _load(activePath, isVideo: activeIsVideo),
                             child: const Text('Retry'),
                           ),
                         ],
@@ -163,16 +249,12 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     ),
                   ],
                   const SizedBox(height: 24),
-                  if (recording.isVideo)
-                    VideoPreview(
-                      path: activePath,
-                      position: position,
-                      isPlaying: isPlaying,
-                    )
+                  if (activeIsVideo)
+                    VideoPreview(controller: _video, error: _loadError)
                   // The picture already shows what is playing, and pulling a
                   // waveform out of a video container mostly fails anyway.
                   else
-                    waveformAsync.when(
+                    ref.watch(waveformSamplesProvider(activePath)).when(
                     loading: () => const SizedBox(
                       height: 100,
                       child: Center(child: CircularProgressIndicator()),
@@ -196,9 +278,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         .clamp(0, duration.inMilliseconds)
                         .toDouble(),
                     max: duration.inMilliseconds.toDouble().clamp(1, double.infinity),
-                    onChanged: (v) => ref
-                        .read(playbackControllerProvider)
-                        .seek(Duration(milliseconds: v.round())),
+                    onChanged: (v) => _seek(Duration(milliseconds: v.round())),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -213,7 +293,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         ),
                         onPressed: () {
                           setState(() => _loop = !_loop);
-                          ref.read(playbackControllerProvider).setLoop(_loop);
+                          _setLoop(_loop);
                         },
                       ),
                       const SizedBox(width: 12),
@@ -222,9 +302,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         shape: const CircleBorder(),
                         child: InkWell(
                           customBorder: const CircleBorder(),
-                          onTap: () => ref
-                              .read(playbackControllerProvider)
-                              .playPause(isPlaying),
+                          onTap: () => _togglePlay(isPlaying),
                           child: SizedBox(
                             width: 72,
                             height: 72,
@@ -243,7 +321,7 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                         initialValue: _speed,
                         onSelected: (v) {
                           setState(() => _speed = v);
-                          ref.read(playbackControllerProvider).setSpeed(v);
+                          _setSpeed(v);
                         },
                         itemBuilder: (_) => _speeds
                             .map((s) => PopupMenuItem(
@@ -288,10 +366,15 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                       for (final theme in recording.themeVariants.keys)
                         ChoiceChip(
                           label: Text(theme.label),
-                          selected:
-                              _source is ThemeSource && (_source as ThemeSource).theme == theme,
-                          onSelected: (_) =>
-                              setState(() => _source = ThemeSource(theme)),
+                          selected: _source is ThemeSource &&
+                              (_source as ThemeSource).theme == theme,
+                          // Tapping the selected version drops back to the
+                          // original rather than doing nothing.
+                          onSelected: (chosen) => setState(
+                            () => _source = chosen
+                                ? ThemeSource(theme)
+                                : const OriginalSource(),
+                          ),
                         ),
                     ],
                   ),

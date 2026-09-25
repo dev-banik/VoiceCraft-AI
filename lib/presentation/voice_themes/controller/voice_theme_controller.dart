@@ -38,6 +38,16 @@ class VoiceThemeController extends StateNotifier<VoiceThemeState> {
   final Ref ref;
   VoiceThemeController(this.ref) : super(const VoiceThemeState());
 
+  /// Clears the chosen theme and stops the preview.
+  ///
+  /// Needs its own method because `copyWith` can't put `selected` back to
+  /// null — `selected ?? this.selected` keeps the old value — so once a
+  /// theme was picked there was no way to un-pick it.
+  void clearSelection() {
+    ref.read(audioPlayerServiceProvider).stop();
+    state = VoiceThemeState(previews: state.previews);
+  }
+
   Future<void> preview(RecordingEntity recording, VoiceTheme theme) async {
     state = state.copyWith(selected: theme, isProcessing: true, error: null);
     try {

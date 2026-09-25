@@ -68,7 +68,20 @@ class NoiseRemovalService implements AiEngine {
     );
     await _run('-y -i "$sourcePath" -af "$filter" -vn -c:a aac "$audioOnly"');
 
-    return ProcessedMedia(output, audioPath: audioOnly);
+    // The untouched soundtrack too, so the before/after comparison has a
+    // playable "before". Stream-copied, so it costs almost nothing.
+    final sourceAudio = await FileUtils.derivedPath(
+      sourcePath,
+      'source_audio',
+      extension: 'm4a',
+    );
+    await _run('-y -i "$sourcePath" -vn -c:a copy "$sourceAudio"');
+
+    return ProcessedMedia(
+      output,
+      audioPath: audioOnly,
+      sourceAudioPath: sourceAudio,
+    );
   }
 
   Future<void> _run(String cmd) async {

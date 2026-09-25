@@ -76,6 +76,12 @@ class VoiceThemesScreen extends ConsumerWidget {
                         isProcessing: state.isProcessing,
                         hasPreview: state.previews.containsKey(theme),
                         onTap: () async {
+                          // Tapping the chosen theme again clears it, so a
+                          // selection can be undone without leaving.
+                          if (state.selected == theme) {
+                            controller.clearSelection();
+                            return;
+                          }
                           await controller.preview(recording, theme);
                           final processed = ref
                               .read(voiceThemeControllerProvider)

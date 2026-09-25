@@ -16,7 +16,13 @@ class ProcessedMedia {
   /// The processed audio on its own, present only for a video source.
   final String? audioPath;
 
-  const ProcessedMedia(this.path, {this.audioPath});
+  /// The *unprocessed* soundtrack, extracted so a before/after comparison
+  /// has something playable to compare against — the audio engine cannot
+  /// drive an .mp4, so without this the "before" side of a video A/B is
+  /// silent. Present only for a video source.
+  final String? sourceAudioPath;
+
+  const ProcessedMedia(this.path, {this.audioPath, this.sourceAudioPath});
 
   bool get hasSeparateAudio => audioPath != null;
 }

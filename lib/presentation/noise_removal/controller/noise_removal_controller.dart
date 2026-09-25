@@ -12,6 +12,10 @@ class NoiseRemovalState {
   /// For a video source, the cleaned soundtrack saved on its own alongside
   /// the video. Null for an audio source.
   final String? resultAudioPath;
+
+  /// The untouched soundtrack of a video source, so the "before" side of
+  /// the comparison has something playable.
+  final String? sourceAudioPath;
   final String? error;
 
   const NoiseRemovalState({
@@ -19,6 +23,7 @@ class NoiseRemovalState {
     this.isProcessing = false,
     this.resultPath,
     this.resultAudioPath,
+    this.sourceAudioPath,
     this.error,
   });
 
@@ -27,6 +32,7 @@ class NoiseRemovalState {
     bool? isProcessing,
     String? resultPath,
     String? resultAudioPath,
+    String? sourceAudioPath,
     String? error,
   }) {
     return NoiseRemovalState(
@@ -34,6 +40,7 @@ class NoiseRemovalState {
       isProcessing: isProcessing ?? this.isProcessing,
       resultPath: resultPath ?? this.resultPath,
       resultAudioPath: resultAudioPath ?? this.resultAudioPath,
+      sourceAudioPath: sourceAudioPath ?? this.sourceAudioPath,
       error: error,
     );
   }
@@ -58,6 +65,7 @@ class NoiseRemovalController extends StateNotifier<NoiseRemovalState> {
         isProcessing: false,
         resultPath: output.path,
         resultAudioPath: output.audioPath,
+        sourceAudioPath: output.sourceAudioPath,
       );
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());

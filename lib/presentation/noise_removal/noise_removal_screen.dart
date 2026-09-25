@@ -35,11 +35,26 @@ class _NoiseRemovalScreenState extends ConsumerState<NoiseRemovalScreen> {
   /// needing a second tap.
   Future<void> _playSide(bool processed, RecordingEntity recording) async {
     final state = ref.read(noiseRemovalControllerProvider(widget.recordingId));
-    final path = processed ? state.resultPath : recording.localPath;
+
+    // This comparison is about how the voice sounds, so it always plays
+    // audio. For a video the processed result is an .mp4 the audio engine
+    // can't drive — which is why "cleaned" was silent — so use the
+    // soundtrack that was extracted alongside it.
+    final path = processed
+        ? (state.resultAudioPath ?? state.resultPath)
+        : (state.sourceAudioPath ?? recording.localPath);
     if (path == null) return;
-    final player = ref.read(playbackControllerProvider);
-    await player.load(path);
-    await player.playPause(false);
+
+    try {
+      final player = ref.read(playbackControllerProvider);
+      await player.load(path);
+      await player.playPause(false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Couldn't play that: $e")),
+      );
+    }
   }
 
   Future<void> _save(RecordingEntity recording) async {
@@ -254,12 +269,12 @@ class _NoiseRemovalScreenState extends ConsumerState<NoiseRemovalScreen> {
                               ButtonSegment(
                                 value: false,
                                 icon: Icon(Icons.mic_none_rounded),
-                                label: Text('Original'),
+                                label: Text('Before'),
                               ),
                               ButtonSegment(
                                 value: true,
                                 icon: Icon(Icons.auto_awesome_rounded),
-                                label: Text('Cleaned'),
+                                label: Text('After'),
                               ),
                             ],
                             selected: {_playingProcessed},
@@ -282,7 +297,9 @@ class _NoiseRemovalScreenState extends ConsumerState<NoiseRemovalScreen> {
                             label: Text(
                               isPlaying
                                   ? 'Pause'
-                                  : 'Play ${_playingProcessed ? 'cleaned' : 'original'}',
+                                  : _playingProcessed
+                                      ? 'Play noise-removed version'
+                                      : 'Play the original',
                             ),
                             onPressed: () async {
                               if (isPlaying) {
