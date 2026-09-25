@@ -92,3 +92,8 @@ coverage/
 *.env
 .env*
 !*.env.example
+
+# Downloaded APKs for sideloading (see tools/fetch-apk.ps1) — same reason as
+# /dist/ above: these are CI build outputs, well over GitHub's 100MB push
+# limit, and re-fetchable any time.
+/install apk/
