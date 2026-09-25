@@ -1,6 +1,7 @@
 import '../../../core/error/exceptions.dart';
 import '../../models/recording_model.dart';
 import 'hive_boxes.dart';
+import 'library_manifest.dart';
 
 /// Direct Hive access for recordings. Throws [LocalStorageException] on
 /// failure; the repository translates these into [Failure]s.
@@ -31,6 +32,7 @@ class RecordingLocalDatasource {
     } catch (e) {
       throw LocalStorageException('Failed to save recording: $e');
     }
+    await _mirrorToManifest();
   }
 
   Future<void> delete(String id) async {
@@ -39,5 +41,13 @@ class RecordingLocalDatasource {
     } catch (e) {
       throw LocalStorageException('Failed to delete recording: $e');
     }
+    await _mirrorToManifest();
   }
+
+  /// Rewrites the shared-storage manifest after every change, so the copy
+  /// that survives an uninstall is never behind the database. It writes
+  /// nothing at all when shared storage isn't available, and never throws —
+  /// a manifest problem must not fail the save the user actually asked for.
+  Future<void> _mirrorToManifest() =>
+      LibraryManifest.write(HiveBoxes.recordings.values.toList());
 }

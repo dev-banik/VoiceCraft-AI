@@ -14,6 +14,17 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
 
+    <!--
+      Lets recordings live in a public "VoiceCraft AI" folder rather than
+      app-private storage, which is erased on uninstall or "clear data" —
+      that is what previously cost users their whole library on every
+      reinstall. The app works without this permission and simply falls back
+      to app-private storage; see lib/core/utils/storage_location.dart.
+      Note this permission is Play-Store-restricted; it's fine for a
+      sideloaded build, but publishing would need the MediaStore API instead.
+    -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
     <uses-feature
         android:name="android.hardware.microphone"
         android:required="true" />

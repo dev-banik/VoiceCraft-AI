@@ -131,6 +131,55 @@ class RecordingModel extends HiveObject {
     );
   }
 
+  /// Complete round-trippable form, including local paths — unlike
+  /// [toFirestore], which deliberately omits device-specific fields. Used for
+  /// the `library.json` manifest that sits beside the audio in shared
+  /// storage, so the library can be rebuilt after a reinstall.
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'localPath': localPath,
+      'durationMs': durationMs,
+      'sizeBytes': sizeBytes,
+      'createdAt': createdAt.toIso8601String(),
+      'format': format,
+      'sampleRate': sampleRate,
+      'quality': quality,
+      'denoisedPath': denoisedPath,
+      'enhancedPath': enhancedPath,
+      'themeVariants': themeVariants,
+      'kind': kind,
+      'sourceRecordingId': sourceRecordingId,
+      'synced': synced,
+      'cloudUrl': cloudUrl,
+      'tags': tags,
+    };
+  }
+
+  static RecordingModel fromJson(Map<String, dynamic> json) {
+    return RecordingModel(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      localPath: json['localPath'] as String,
+      durationMs: json['durationMs'] as int,
+      sizeBytes: json['sizeBytes'] as int,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      format: json['format'] as String,
+      sampleRate: json['sampleRate'] as int,
+      quality: json['quality'] as String,
+      denoisedPath: json['denoisedPath'] as String?,
+      enhancedPath: json['enhancedPath'] as String?,
+      themeVariants:
+          (json['themeVariants'] as Map?)?.cast<String, String>() ?? const {},
+      kind: json['kind'] as String? ?? 'original',
+      sourceRecordingId: json['sourceRecordingId'] as String?,
+      synced: json['synced'] as bool? ?? false,
+      cloudUrl: json['cloudUrl'] as String?,
+      tags: (json['tags'] as List<dynamic>? ?? const []).cast<String>(),
+    );
+  }
+
   Map<String, dynamic> toFirestore() {
     return {
       'id': id,

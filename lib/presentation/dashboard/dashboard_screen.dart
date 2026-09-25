@@ -9,6 +9,7 @@ import '../auth/sign_in_sheet.dart';
 import '../shared/widgets/empty_state.dart';
 import 'controller/dashboard_controller.dart';
 import 'widgets/recording_tile.dart';
+import 'widgets/storage_safety_card.dart';
 import 'widgets/storage_summary_card.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -63,6 +64,7 @@ class DashboardScreen extends ConsumerWidget {
             return ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
               children: [
+                const StorageSafetyCard(),
                 StorageSummaryCard(
                   totalRecordings: totalCount,
                   recentCount: recordings

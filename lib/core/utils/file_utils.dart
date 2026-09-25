@@ -1,28 +1,25 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
-/// Filesystem helpers for the app's private recordings directory.
+import 'storage_location.dart';
+
+/// Filesystem helpers for the recordings directory.
 ///
-/// Layout on disk:
-///   <app documents>/recordings/<id>.<ext>            original take
-///   <app documents>/recordings/<id>_denoised.<ext>    noise-removal output
-///   <app documents>/recordings/<id>_<theme>.<ext>     voice-theme output
-///   <app documents>/recordings/<id>_edit_<n>.<ext>     editor exports
+/// Layout on disk, under whichever root [StorageLocation.recordingsRoot]
+/// resolves to — the public "VoiceCraft AI" folder when the user has granted
+/// access to it, app-private storage otherwise:
+///   <root>/recordings/<id>.<ext>            original take
+///   <root>/recordings/<id>_denoised.<ext>    noise-removal output
+///   <root>/recordings/<id>_<theme>.<ext>     voice-theme output
+///   <root>/recordings/<id>_edit_<n>.<ext>     editor exports
 const Uuid _uuid = Uuid();
 
 class FileUtils {
   FileUtils._();
 
-  static Future<Directory> recordingsDirectory() async {
-    final base = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(base.path, 'recordings'));
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
-    }
-    return dir;
-  }
+  static Future<Directory> recordingsDirectory() =>
+      StorageLocation.recordingsRoot();
 
   static Future<String> newRecordingPath(String extension) async {
     final dir = await recordingsDirectory();
