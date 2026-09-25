@@ -78,10 +78,23 @@ Future<String?> saveDerivative(
   required String titleSuffix,
   required DerivativeSaveMode mode,
   required DerivativeMarker mark,
+  String? companionAudioPath,
 }) async {
   final usecases = ref.read(recordingUsecasesProvider);
   final current = (await usecases.getById(recordingId)).valueOrNull;
   if (current == null) return null;
+
+  // A processed video also yields its soundtrack on its own. That is always
+  // an addition to the library rather than a replacement — it isn't the
+  // thing the user was editing, so it never overwrites anything.
+  if (companionAudioPath != null) {
+    await _saveCompanionAudio(
+      ref,
+      source: current,
+      path: companionAudioPath,
+      titleSuffix: titleSuffix,
+    );
+  }
 
   // The processed file has its own length and size — a denoise pass can
   // change both — so measure rather than carrying the source's numbers over.
@@ -102,6 +115,7 @@ Future<String?> saveDerivative(
           format: current.format,
           sampleRate: current.sampleRate,
           quality: current.quality,
+          mediaType: current.mediaType,
           kind: RecordingKind.modified,
           sourceRecordingId: current.id,
         ),
@@ -122,6 +136,7 @@ Future<String?> saveDerivative(
         format: current.format,
         sampleRate: current.sampleRate,
         quality: current.quality,
+        mediaType: current.mediaType,
         kind: RecordingKind.archivedOriginal,
         sourceRecordingId: current.id,
       );
@@ -141,4 +156,32 @@ Future<String?> saveDerivative(
       ref.invalidate(recordingByIdProvider(recordingId));
       return recordingId;
   }
+}
+
+/// Stores the audio extracted from a processed video as its own library
+/// entry, always as [RecordingKind.modified] audio pointing back at the
+/// video it came from.
+Future<void> _saveCompanionAudio(
+  Ref ref, {
+  required RecordingEntity source,
+  required String path,
+  required String titleSuffix,
+}) async {
+  final duration =
+      await ref.read(audioEditorServiceProvider).probeDuration(path);
+  final entity = RecordingEntity(
+    id: FileUtils.newId(),
+    title: '${source.title} ($titleSuffix audio)',
+    localPath: path,
+    duration: duration,
+    sizeBytes: await FileUtils.sizeOf(path),
+    createdAt: DateTime.now(),
+    format: source.format,
+    sampleRate: source.sampleRate,
+    quality: source.quality,
+    mediaType: MediaType.audio,
+    kind: RecordingKind.modified,
+    sourceRecordingId: source.id,
+  );
+  await ref.read(recordingUsecasesProvider).save(entity);
 }

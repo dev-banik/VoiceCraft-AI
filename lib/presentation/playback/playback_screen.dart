@@ -7,6 +7,7 @@ import '../../core/di/providers.dart';
 import '../../core/router/route_names.dart';
 import '../../core/utils/formatters.dart';
 import '../shared/widgets/static_waveform.dart';
+import 'widgets/video_preview.dart';
 import 'controller/playback_controller.dart';
 
 const List<double> _speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -158,6 +159,14 @@ class _PlaybackScreenState extends ConsumerState<PlaybackScreen> {
                     ),
                   ],
                   const SizedBox(height: 24),
+                  if (recording.isVideo) ...[
+                    VideoPreview(
+                      path: activePath,
+                      position: position,
+                      isPlaying: isPlaying,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                   waveformAsync.when(
                     loading: () => const SizedBox(
                       height: 100,

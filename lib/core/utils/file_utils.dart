@@ -27,10 +27,17 @@ class FileUtils {
     return p.join(dir.path, '$id.$extension');
   }
 
-  static Future<String> derivedPath(String sourcePath, String suffix) async {
+  /// Path for a file derived from [sourcePath], keeping its container unless
+  /// [extension] overrides it — a video's extracted soundtrack needs to land
+  /// as `.m4a`, not as another `.mp4`.
+  static Future<String> derivedPath(
+    String sourcePath,
+    String suffix, {
+    String? extension,
+  }) async {
     final dir = await recordingsDirectory();
     final base = p.basenameWithoutExtension(sourcePath);
-    final ext = p.extension(sourcePath);
+    final ext = extension != null ? '.$extension' : p.extension(sourcePath);
     return p.join(dir.path, '${base}_$suffix$ext');
   }
 

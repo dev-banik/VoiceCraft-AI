@@ -5,6 +5,7 @@ import '../../core/error/exceptions.dart';
 import '../../core/utils/file_utils.dart';
 import '../../core/utils/logger.dart';
 import 'ai_engine.dart';
+import 'processed_media.dart';
 
 /// AI Noise Removal pipeline:
 ///   Input Audio -> Noise Detection -> AI Noise Suppression
@@ -28,7 +29,7 @@ class NoiseRemovalService implements AiEngine {
   @override
   bool get requiresModel => false;
 
-  Future<String> removeNoise(
+  Future<ProcessedMedia> removeNoise(
     String sourcePath, {
     double strength = 0.6,
   }) async {
@@ -48,7 +49,29 @@ class NoiseRemovalService implements AiEngine {
       'acompressor=threshold=-21dB:ratio=2.5:attack=8:release=180:makeup=2',
     ].join(',');
 
-    final cmd = '-y -i "$sourcePath" -af "$filter" "$output"';
+    if (!isVideoPath(sourcePath)) {
+      await _run('-y -i "$sourcePath" -af "$filter" "$output"');
+      return ProcessedMedia(output);
+    }
+
+    // `-c:v copy` remuxes the original video stream untouched: no re-encode,
+    // so it is fast and the picture is bit-identical. Only the audio track
+    // is rebuilt.
+    await _run('-y -i "$sourcePath" -af "$filter" -c:v copy "$output"');
+
+    // The soundtrack on its own, so it can be shared or processed further
+    // without dragging the video along.
+    final audioOnly = await FileUtils.derivedPath(
+      sourcePath,
+      'denoised_audio',
+      extension: 'm4a',
+    );
+    await _run('-y -i "$sourcePath" -af "$filter" -vn -c:a aac "$audioOnly"');
+
+    return ProcessedMedia(output, audioPath: audioOnly);
+  }
+
+  Future<void> _run(String cmd) async {
     final session = await FFmpegKit.execute(cmd);
     final code = await session.getReturnCode();
     if (!ReturnCode.isSuccess(code)) {
@@ -56,6 +79,5 @@ class NoiseRemovalService implements AiEngine {
       appLogger.e('Noise removal failed: $logs');
       throw AudioProcessingException('Noise removal failed.');
     }
-    return output;
   }
 }

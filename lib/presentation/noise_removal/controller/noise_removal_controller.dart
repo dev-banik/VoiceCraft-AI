@@ -8,12 +8,17 @@ class NoiseRemovalState {
   final double strength;
   final bool isProcessing;
   final String? resultPath;
+
+  /// For a video source, the cleaned soundtrack saved on its own alongside
+  /// the video. Null for an audio source.
+  final String? resultAudioPath;
   final String? error;
 
   const NoiseRemovalState({
     this.strength = 0.6,
     this.isProcessing = false,
     this.resultPath,
+    this.resultAudioPath,
     this.error,
   });
 
@@ -21,12 +26,14 @@ class NoiseRemovalState {
     double? strength,
     bool? isProcessing,
     String? resultPath,
+    String? resultAudioPath,
     String? error,
   }) {
     return NoiseRemovalState(
       strength: strength ?? this.strength,
       isProcessing: isProcessing ?? this.isProcessing,
       resultPath: resultPath ?? this.resultPath,
+      resultAudioPath: resultAudioPath ?? this.resultAudioPath,
       error: error,
     );
   }
@@ -47,7 +54,11 @@ class NoiseRemovalController extends StateNotifier<NoiseRemovalState> {
       final output = await ref
           .read(noiseRemovalServiceProvider)
           .removeNoise(sourcePath, strength: state.strength);
-      state = state.copyWith(isProcessing: false, resultPath: output);
+      state = state.copyWith(
+        isProcessing: false,
+        resultPath: output.path,
+        resultAudioPath: output.audioPath,
+      );
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
     }
@@ -65,6 +76,7 @@ class NoiseRemovalController extends StateNotifier<NoiseRemovalState> {
       ref,
       recordingId: recording.id,
       processedPath: state.resultPath!,
+      companionAudioPath: state.resultAudioPath,
       titleSuffix: 'noise removed',
       mode: mode,
       mark: (r, path) => r.copyWith(denoisedPath: path),

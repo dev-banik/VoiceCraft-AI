@@ -77,12 +77,16 @@ class VoiceThemesScreen extends ConsumerWidget {
                         hasPreview: state.previews.containsKey(theme),
                         onTap: () async {
                           await controller.preview(recording, theme);
-                          final path = ref
+                          final processed = ref
                               .read(voiceThemeControllerProvider)
                               .previews[theme];
-                          if (path != null) {
+                          if (processed != null) {
+                            // For a video, preview the extracted soundtrack —
+                            // this is a voice preview, and the picture is
+                            // unchanged anyway.
                             final player = ref.read(playbackControllerProvider);
-                            await player.load(path);
+                            await player
+                                .load(processed.audioPath ?? processed.path);
                             await player.playPause(false);
                           }
                         },

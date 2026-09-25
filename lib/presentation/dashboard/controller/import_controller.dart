@@ -9,6 +9,7 @@ import '../../../core/di/providers.dart';
 import '../../../core/utils/file_utils.dart';
 import '../../../core/utils/logger.dart';
 import '../../../domain/entities/recording_entity.dart';
+import '../../../services/ai/processed_media.dart';
 
 /// Why an import failed, so the dashboard can say something specific rather
 /// than a generic error.
@@ -55,8 +56,10 @@ class ImportController {
   Future<ImportResult> pickAndImport() async {
     FilePickerResult? picked;
     try {
+      // `media` covers audio and video in one picker, so importing a clip
+      // to clean up its soundtrack is the same gesture as importing audio.
       picked = await FilePicker.platform.pickFiles(
-        type: FileType.audio,
+        type: FileType.media,
         allowMultiple: false,
         withData: false,
       );
@@ -106,6 +109,7 @@ class ImportController {
       format: RecordingFormat.aac,
       sampleRate: AppConstants.defaultSampleRate,
       quality: RecordingQuality.high,
+      mediaType: isVideoPath(destinationPath) ? MediaType.video : MediaType.audio,
       tags: const ['imported'],
     );
 

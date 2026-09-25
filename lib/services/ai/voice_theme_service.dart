@@ -8,6 +8,7 @@ import '../../core/error/exceptions.dart';
 import '../../core/utils/file_utils.dart';
 import '../../core/utils/logger.dart';
 import 'ai_engine.dart';
+import 'processed_media.dart';
 
 /// Voice Themes pipeline: Original Recording -> Select Theme
 /// -> Generate New Version -> Save as Separate File. The source recording
@@ -33,17 +34,41 @@ class VoiceThemeService implements AiEngine {
   @override
   bool get requiresModel => false;
 
-  Future<String> applyTheme(
+  Future<ProcessedMedia> applyTheme(
     String sourcePath,
     VoiceTheme theme, {
     int sampleRate = AppConstants.defaultSampleRate,
   }) async {
-    if (theme == VoiceTheme.original) return sourcePath;
+    if (theme == VoiceTheme.original) return ProcessedMedia(sourcePath);
 
     final output = await FileUtils.derivedPath(sourcePath, theme.name);
     final filter = _filterChainFor(theme, sampleRate);
 
-    final cmd = '-y -i "$sourcePath" -af "$filter" "$output"';
+    if (!isVideoPath(sourcePath)) {
+      await _run('-y -i "$sourcePath" -af "$filter" "$output"', theme);
+      return ProcessedMedia(output);
+    }
+
+    // Video stream copied through untouched; only the voice is transformed.
+    await _run(
+      '-y -i "$sourcePath" -af "$filter" -c:v copy "$output"',
+      theme,
+    );
+
+    final audioOnly = await FileUtils.derivedPath(
+      sourcePath,
+      '${theme.name}_audio',
+      extension: 'm4a',
+    );
+    await _run(
+      '-y -i "$sourcePath" -af "$filter" -vn -c:a aac "$audioOnly"',
+      theme,
+    );
+
+    return ProcessedMedia(output, audioPath: audioOnly);
+  }
+
+  Future<void> _run(String cmd, VoiceTheme theme) async {
     final session = await FFmpegKit.execute(cmd);
     final code = await session.getReturnCode();
     if (!ReturnCode.isSuccess(code)) {
@@ -51,7 +76,6 @@ class VoiceThemeService implements AiEngine {
       appLogger.e('Voice theme (${theme.name}) failed: $logs');
       throw AudioProcessingException('Applying ${theme.label} failed.');
     }
-    return output;
   }
 
   /// Builds an `asetrate`-based pitch shift that preserves duration.

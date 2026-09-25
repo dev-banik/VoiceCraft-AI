@@ -25,6 +25,9 @@ class RecordingEntity extends Equatable {
   /// Voice-theme derivatives generated from this recording, keyed by theme.
   final Map<VoiceTheme, String> themeVariants;
 
+  /// Whether this entry is audio or a video whose audio track is processed.
+  final MediaType mediaType;
+
   /// Which shelf this recording sits on — a plain take, a processed copy
   /// saved alongside its source, or the audio preserved when a recording was
   /// replaced in place.
@@ -51,6 +54,7 @@ class RecordingEntity extends Equatable {
     this.denoisedPath,
     this.enhancedPath,
     this.themeVariants = const {},
+    this.mediaType = MediaType.audio,
     this.kind = RecordingKind.original,
     this.sourceRecordingId,
     this.synced = false,
@@ -63,6 +67,7 @@ class RecordingEntity extends Equatable {
   bool get hasThemeApplied => themeVariants.isNotEmpty;
   bool get isLocalOnly => !synced;
 
+  bool get isVideo => mediaType == MediaType.video;
   bool get isModified => kind == RecordingKind.modified;
   bool get isArchivedOriginal => kind == RecordingKind.archivedOriginal;
 
@@ -84,6 +89,7 @@ class RecordingEntity extends Equatable {
     String? denoisedPath,
     String? enhancedPath,
     Map<VoiceTheme, String>? themeVariants,
+    MediaType? mediaType,
     RecordingKind? kind,
     String? sourceRecordingId,
     bool? synced,
@@ -103,6 +109,7 @@ class RecordingEntity extends Equatable {
       denoisedPath: denoisedPath ?? this.denoisedPath,
       enhancedPath: enhancedPath ?? this.enhancedPath,
       themeVariants: themeVariants ?? this.themeVariants,
+      mediaType: mediaType ?? this.mediaType,
       kind: kind ?? this.kind,
       sourceRecordingId: sourceRecordingId ?? this.sourceRecordingId,
       synced: synced ?? this.synced,
@@ -125,6 +132,7 @@ class RecordingEntity extends Equatable {
         denoisedPath,
         enhancedPath,
         themeVariants,
+        mediaType,
         kind,
         sourceRecordingId,
         synced,

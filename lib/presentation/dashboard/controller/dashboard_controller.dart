@@ -9,13 +9,15 @@ final StreamProvider<List<RecordingEntity>> recordingsStreamProvider =
 });
 
 /// Which shelf of the library the landing screen is showing.
-enum LibraryTab { all, modified, originals }
+enum LibraryTab { all, videos, modified, originals }
 
 extension LibraryTabLabel on LibraryTab {
   String get label {
     switch (this) {
       case LibraryTab.all:
         return 'All';
+      case LibraryTab.videos:
+        return 'Videos';
       case LibraryTab.modified:
         return 'Modified';
       case LibraryTab.originals:
@@ -27,6 +29,8 @@ extension LibraryTabLabel on LibraryTab {
     switch (this) {
       case LibraryTab.all:
         return r.isInLibrary;
+      case LibraryTab.videos:
+        return r.isInLibrary && r.isVideo;
       case LibraryTab.modified:
         return r.isModified;
       case LibraryTab.originals:

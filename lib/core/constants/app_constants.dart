@@ -53,6 +53,23 @@ extension RecordingKindLabel on RecordingKind {
   }
 }
 
+/// Whether a library entry is a plain audio take or a video whose audio
+/// track is what gets processed.
+enum MediaType { audio, video }
+
+/// Container extensions treated as video on import. Deliberately a small,
+/// explicit list: anything not on it is processed as audio, which fails
+/// safely rather than trying to mux a video stream that isn't there.
+const Set<String> kVideoExtensions = {
+  'mp4',
+  'mov',
+  'mkv',
+  'avi',
+  'webm',
+  '3gp',
+  'm4v',
+};
+
 /// Supported recording output formats.
 enum RecordingFormat { wav, mp3, aac }
 

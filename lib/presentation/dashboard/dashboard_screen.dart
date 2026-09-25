@@ -81,21 +81,24 @@ class DashboardScreen extends ConsumerWidget {
                   onStorageTap: () => context.push(RoutePaths.settings),
                 ),
                 const SizedBox(height: 20),
+                // A scrollable chip row rather than a SegmentedButton: four
+                // labels with counts overflow a phone's width.
                 SizedBox(
-                  width: double.infinity,
-                  child: SegmentedButton<LibraryTab>(
-                    showSelectedIcon: false,
-                    segments: [
-                      for (final tab in LibraryTab.values)
-                        ButtonSegment(
-                          value: tab,
-                          label: Text('${tab.label} (${tabCounts[tab] ?? 0})'),
-                        ),
-                    ],
-                    selected: {filters.tab},
-                    onSelectionChanged: (selection) => ref
-                        .read(libraryFiltersProvider.notifier)
-                        .update((f) => f.copyWith(tab: selection.first)),
+                  height: 40,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: LibraryTab.values.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, index) {
+                      final tab = LibraryTab.values[index];
+                      return ChoiceChip(
+                        label: Text('${tab.label} (${tabCounts[tab] ?? 0})'),
+                        selected: filters.tab == tab,
+                        onSelected: (_) => ref
+                            .read(libraryFiltersProvider.notifier)
+                            .update((f) => f.copyWith(tab: tab)),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -252,6 +255,8 @@ class DashboardScreen extends ConsumerWidget {
     switch (filters.tab) {
       case LibraryTab.all:
         return 'Your recordings';
+      case LibraryTab.videos:
+        return 'Videos';
       case LibraryTab.modified:
         return 'Modified recordings';
       case LibraryTab.originals:
@@ -266,6 +271,10 @@ class DashboardScreen extends ConsumerWidget {
     switch (filters.tab) {
       case LibraryTab.all:
         return 'No recordings yet.';
+      case LibraryTab.videos:
+        return 'No videos yet. Use + then "Upload a recording" to bring '
+            'one in — its soundtrack can be denoised or themed just like '
+            'a voice recording.';
       case LibraryTab.modified:
         return 'Nothing here yet. When you process a recording and choose '
             '"Save as a new recording", it lands on this tab.';

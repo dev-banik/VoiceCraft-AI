@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/di/providers.dart';
 import '../../../domain/entities/recording_entity.dart';
+import '../../../services/ai/processed_media.dart';
 import '../../shared/recording_mutations.dart';
 
 class VoiceThemeState {
   final VoiceTheme? selected;
   final bool isProcessing;
-  final Map<VoiceTheme, String> previews;
+  final Map<VoiceTheme, ProcessedMedia> previews;
   final String? error;
 
   const VoiceThemeState({
@@ -21,7 +22,7 @@ class VoiceThemeState {
   VoiceThemeState copyWith({
     VoiceTheme? selected,
     bool? isProcessing,
-    Map<VoiceTheme, String>? previews,
+    Map<VoiceTheme, ProcessedMedia>? previews,
     String? error,
   }) {
     return VoiceThemeState(
@@ -41,14 +42,15 @@ class VoiceThemeController extends StateNotifier<VoiceThemeState> {
     state = state.copyWith(selected: theme, isProcessing: true, error: null);
     try {
       final existing = state.previews[theme];
-      final path = existing ??
+      final processed = existing ??
           await ref.read(voiceThemeServiceProvider).applyTheme(
                 recording.localPath,
                 theme,
                 sampleRate: recording.sampleRate,
               );
-      final updatedPreviews = Map<VoiceTheme, String>.from(state.previews)
-        ..[theme] = path;
+      final updatedPreviews =
+          Map<VoiceTheme, ProcessedMedia>.from(state.previews)
+            ..[theme] = processed;
       state = state.copyWith(isProcessing: false, previews: updatedPreviews);
     } catch (e) {
       state = state.copyWith(isProcessing: false, error: e.toString());
@@ -63,12 +65,13 @@ class VoiceThemeController extends StateNotifier<VoiceThemeState> {
     VoiceTheme theme,
     DerivativeSaveMode mode,
   ) async {
-    final path = state.previews[theme];
-    if (path == null) return null;
+    final processed = state.previews[theme];
+    if (processed == null) return null;
     return saveDerivative(
       ref,
       recordingId: recording.id,
-      processedPath: path,
+      processedPath: processed.path,
+      companionAudioPath: processed.audioPath,
       titleSuffix: theme.label,
       mode: mode,
       mark: (r, p) => r.copyWith(

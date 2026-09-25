@@ -62,6 +62,10 @@ class RecordingModel extends HiveObject {
   @HiveField(16)
   final String? sourceRecordingId;
 
+  /// [MediaType] stored as its `name`; absent in older boxes, read as audio.
+  @HiveField(17)
+  final String mediaType;
+
   RecordingModel({
     required this.id,
     required this.title,
@@ -77,6 +81,7 @@ class RecordingModel extends HiveObject {
     this.themeVariants = const {},
     this.kind = 'original',
     this.sourceRecordingId,
+    this.mediaType = 'audio',
     this.synced = false,
     this.cloudUrl,
     this.tags = const [],
@@ -99,6 +104,7 @@ class RecordingModel extends HiveObject {
           e.themeVariants.map((theme, path) => MapEntry(theme.name, path)),
       kind: e.kind.name,
       sourceRecordingId: e.sourceRecordingId,
+      mediaType: e.mediaType.name,
       synced: e.synced,
       cloudUrl: e.cloudUrl,
       tags: e.tags,
@@ -125,6 +131,8 @@ class RecordingModel extends HiveObject {
       // throwing, so a box written by an older build still opens.
       kind: RecordingKind.values.asNameMap()[kind] ?? RecordingKind.original,
       sourceRecordingId: sourceRecordingId,
+      mediaType:
+          MediaType.values.asNameMap()[mediaType] ?? MediaType.audio,
       synced: synced,
       cloudUrl: cloudUrl,
       tags: tags,
@@ -151,6 +159,7 @@ class RecordingModel extends HiveObject {
       'themeVariants': themeVariants,
       'kind': kind,
       'sourceRecordingId': sourceRecordingId,
+      'mediaType': mediaType,
       'synced': synced,
       'cloudUrl': cloudUrl,
       'tags': tags,
@@ -174,6 +183,7 @@ class RecordingModel extends HiveObject {
           (json['themeVariants'] as Map?)?.cast<String, String>() ?? const {},
       kind: json['kind'] as String? ?? 'original',
       sourceRecordingId: json['sourceRecordingId'] as String?,
+      mediaType: json['mediaType'] as String? ?? 'audio',
       synced: json['synced'] as bool? ?? false,
       cloudUrl: json['cloudUrl'] as String?,
       tags: (json['tags'] as List<dynamic>? ?? const []).cast<String>(),

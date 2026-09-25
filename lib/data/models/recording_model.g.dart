@@ -40,13 +40,14 @@ class RecordingModelAdapter extends TypeAdapter<RecordingModel> {
       // so the lookup yields null and the constructor default applies.
       kind: fields[15] as String? ?? 'original',
       sourceRecordingId: fields[16] as String?,
+      mediaType: fields[17] as String? ?? 'audio',
     );
   }
 
   @override
   void write(BinaryWriter writer, RecordingModel obj) {
     writer
-      ..writeByte(17)
+      ..writeByte(18)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -80,7 +81,9 @@ class RecordingModelAdapter extends TypeAdapter<RecordingModel> {
       ..writeByte(15)
       ..write(obj.kind)
       ..writeByte(16)
-      ..write(obj.sourceRecordingId);
+      ..write(obj.sourceRecordingId)
+      ..writeByte(17)
+      ..write(obj.mediaType);
   }
 
   @override
