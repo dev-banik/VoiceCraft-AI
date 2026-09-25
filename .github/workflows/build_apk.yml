@@ -2,7 +2,10 @@ name: Build Android APK
 
 on:
   push:
+    # `branches` on its own means tag pushes never trigger this workflow,
+    # which left the create-release-on-tag job below permanently unreachable.
     branches: [main]
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch: {}
